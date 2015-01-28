@@ -1,0 +1,443 @@
+@charset "utf-8";
+
+@import "type-check";
+@import "type-conversion";
+@import "list";
+@import "map";
+@import "base-fn";
+@import "reset";
+
+body{
+  width:100%;
+  font-family: "微软雅黑", Verdana, Geneva, sans-serif;
+  font-size: 1em;
+}
+
+.trailing{
+  margin-right:0;
+  padding-right:0;
+}
+
+.circle{
+  -moz-border-radius: 50%;
+  -webkit-border-radiu: 50%;
+  border-radius: 50%;
+}
+
+strong{
+  color:#00be8f;
+  font-weight: normal;
+}
+
+$font: 32px;
+$r_url: "../../w_img/plaza/";
+$png: ".png";
+$max_width: 640px !default;
+
+//header
+#header{
+  @include container;
+  $width:$max_width;
+//  max-width: $max_width;
+  background: #5c8859 url($r_url + banner + $png) center repeat-x;
+  background-size: cover;
+  padding-bottom: rel(256px,$width);
+
+  @at-root #header_content{
+    @include container;
+    max-width: $max_width;
+    padding-bottom: rel(256px,$width);
+
+    @at-root {
+      #logo_header{
+        float:left;
+        margin: rel((24px 14px 50px 24px), $width);
+      }
+
+      #logo_txt{
+        float: left;
+        $margin-top:24px+(90px-85px)/2;
+        margin-top: rel(24px+(106px-85px)/2, $width);
+        margin-bottom: rel(88px+42px+-85px+-$margin-top,$width);
+        font-size: rel(20px, $font, 1em);
+        color: #ffffff;
+
+        .cn_name
+        {
+          font-size: rel(44px, 20px, 1em);
+        }
+      }
+
+      #slogan{
+        float:right;
+        margin:rel((42px,42px,0px,0px),$width);
+      }
+    }
+
+    a{
+       display: block;
+       width: rel(178px,$width);
+       padding-bottom: rel(60px,$width);
+       float:right;
+       vertical-align: middle;
+       margin-top:rel(28px,$width);
+       margin-right:rel(82px,$width);
+
+      &#button_header{
+        background: url($r_url + "m/start_mobile_1" + $png) center no-repeat;
+        background-size: contain;
+      }
+    }
+  }
+
+  .top_background{
+    width:100%;
+    padding-bottom:rel(326px+136px,$width);
+    background:#f9faf7;
+  }
+}
+
+.subtitle{
+  font-size:rel(24px,$font,1em);
+  color:#404040;
+}
+
+//body
+#body{
+  $width:$max_width;
+  $padding:32px;
+  width:auto;
+  padding-left:rel($padding,$width);
+  padding-right: rel($padding,$width);
+
+  @at-root {
+    $parent-width1:$max_width - 2*$padding;
+    $parent1: (width:$parent-width1,font-size:$font);
+
+    //intro
+    #intro{
+      width:100%;
+//      padding-bottom:rel(160px, $width);
+      margin-bottom:rel(32px,$width);
+
+      .illustration{
+        float: left;
+        @include relContentBox((
+                margin:-76px 20px 30px 0,
+                font-size:$font,
+                border:8px solid #ffffff
+//                border-width:8px
+        ),$parent1);
+        margin:rel((-76px,20px,30px,0),$parent-width1);
+//        border:8px solid #ffffff;
+      }
+
+      .title{
+        $width2:$parent-width1+-224px-20px-16px-110px+32px-10px;
+        @include relContentBox((
+                width:$width2,
+                margin-right:-32px,
+                padding-top:32px,
+                font-size:34px,
+                line-count:1
+        ),$parent1);
+        color:#606060;
+//        @include ellipsis;
+      }
+
+      .favour{
+        @include relContentBox((
+                line-height:38px,
+                width:110px,
+                margin-top:-38px,
+                margin-right:-32px,
+                font-size:20px,
+                letter-count:5
+        ),$parent1);
+        display:inline-block;
+        float:right;
+        vertical-align: middle;
+        background-color: #00be8f;
+        text-align: center;
+        color: #ffffff;
+      }
+
+      @at-root{
+        #owner{
+          @include relContentBox((
+                  margin-top:24px,
+                  font-size:24px,
+                  line-count:1
+          ),$parent1);
+          color:#808080;
+        }
+        #plaza_id{
+          @include relContentBox((
+                  margin-top:16px,
+                  font-size:24px,
+                  line-count:1
+          ),$parent1);
+          color:#808080;
+        }
+        #briefs{
+          width:100%;
+          @include relContentBox((margin-top:30px,font-size:24px,line-padding:14px,line-count:3),$parent1);
+          color:#808080;
+//          @include relBox((margin-top:23px,),)
+        }
+      }
+    }
+
+    //content
+    #content{
+      @at-root {
+        //online
+        #online{
+          margin-bottom: rel(24px,$parent-width1);
+
+          .online_avatar{
+            display: inline-block;
+            width:rel(80px,$parent-width1);
+            height:0;
+            padding-bottom: rel(80px,$parent-width1);
+            margin:rel((24px,20px,24px,0),$parent-width1);
+            font-size: 0;
+            overflow: hidden;
+          }
+          .trailing{
+            margin-right:0;
+          }
+        }
+
+        //album
+        #album{
+          margin-bottom: rel(54px,$parent-width1);
+
+          .subcontent{
+            font-size: 0;
+
+            .album_photo{
+              display: inline-block;
+              @include relContentBox((
+                      width:176px,
+                      padding-bottom:176px,
+//                      margin:(24px 18px 0 0),
+                      font-size:0
+              ),$parent1);
+              margin:rel((24px 18px 0 0),$parent-width1);
+              height:0;
+              overflow: hidden;
+            }
+            .trailing{
+              margin-right:0;
+            }
+          }
+        }
+
+        //chronicle
+        #chronicle{
+          margin-bottom: rel(24px,$parent-width1);
+
+          .subcontent>li:first-child{
+            margin-top:rel(24px,$parent-width1);
+          }
+
+          .day{
+            @include relContentBox((width:80px,line-height:32px,font-size:18px),$parent1);
+            text-align: center;
+            background-color: #eff0f1;
+            color: #808080;
+          }
+          .dairy{
+            $parent-width2:$parent-width1+-40px-1px;
+            $parent2:(width:$parent-width2,font-size:$font);
+
+            .notation{
+              @include relBox((margin-left:40px,padding-top:32px,padding-bottom:48px),$parent1);
+              border-left:1px #d4d9dc solid;
+
+              .user_avatar{
+                float:left;
+                margin-left:rel(-32px,$parent-width2);
+                margin-right:rel(24px,$parent-width2);
+              }
+
+              .user_info{
+                width:100%;
+                @include relContentBox((line-height:64px-22px,margin-bottom:2px,font-size:28px),$parent2);
+                color:#404040;
+
+                $parent3:(width:$parent-width2,font-size:28px);
+                .gender_label{
+                  display: inline-block;
+                  @include relContentBox((
+                          width:48px,
+                          line-height:22px,
+                          margin-left:8px,
+                          font-size:16px,
+                          border-radius:4px,
+                          letter-count:3
+                  ),$parent3);
+                  text-align: center;
+                  vertical-align: middle;
+                  color:#ffffff;
+                }
+
+                .male_label{
+                  background-color: #2fd5b9;
+                }
+
+                .female_label{
+                  background-color: #ff9fa8;
+                }
+              }
+
+              $parent-width3:$parent-width2 - 56px;
+              $parent3:(width:$parent-width3,font-size:$font);
+              .notation_body{
+                margin-left:rel(56px,$parent-width2);
+
+                p{
+                  position: relative;
+
+                  .strong{
+                    @include relContentBox((line-padding:12px,font-size:24px),$parent3);
+                    color:#606060;
+                  }
+
+                  .text{
+                    @include relContentBox((line-padding:16px,font-size:24px),$parent3);
+                    color:#808080;
+                  }
+
+                  .dairy_photo{
+                    margin-top:rel(12px,$parent-width3);
+                    margin-right:rel(20px,$parent-width3);
+                  }
+
+                  .new_tag{
+                    position:absolute;
+                    left:0;
+                    top:rel(36px,$parent-width3);
+                  }
+
+                  .avatar_change{
+                    margin-right:rel(20px,$parent-width3);
+                  }
+                }
+
+                .audio{
+                  @include relContentBox((
+                          width:96px,
+                          line-height:40px,
+                          margin-top:16px,
+                          padding:0 20px,
+                          font-size:16px,
+                          word-spacing: 40px,
+                          border-radius:12px,
+                          letter-count:4
+                  ),$parent3);
+                  background-color: #00be8f;
+                  cursor:pointer;
+                  text-align: center;
+                  color:#ffffff;
+
+                  .pause{
+                    background:url($r_url + "play.png") left no-repeat;
+                    background-size: contain;
+                  }
+                  .stop{
+                    background:url($r_url + "play.png") left no-repeat;
+                    background-size: contain;
+                  }
+                  .play{
+                    background:url($r_url + "voice.png") left no-repeat;
+                    background-size: contain;
+                  }
+                }
+              }
+
+              .starting_point{
+                float:left;
+                @include relContentBox((
+                        width:64px,
+                        line-height:64px,
+                        margin-left:-32px,
+                        margin-right:32px,
+                        font-size:24px
+                ),$parent2);
+                text-align: center;
+                color:#d4d9dc;
+              }
+
+              .inception_info{
+                position: relative;
+                @include relContentBox((
+                        width:220px,
+                        line-height:72px,
+                        margin-left:50px,
+                        padding:0 10px,
+                        font-size:24px
+                ),$parent3);
+                background: url($r_url + "m/info.png") left center no-repeat;
+                background-size: contain;
+                padding-left:1.9em;
+                color:#404040;
+              }
+            }
+
+            .last{
+              height:0;
+              padding-bottom: rel(64px/2,$parent-width2);
+              margin-bottom: rel(96px,$parent-width2);
+            }
+          }
+        }
+      }
+    }
+
+  }
+}
+
+//footer
+#footer{
+  width:100%;
+  max-width:$max_width;
+  height:0;
+  position: relative;
+  padding-bottom: rel(144px,$max_width);
+  background-color: #f9faf7;
+
+  @at-root {
+    #logo_footer{
+      float:left;
+      margin:rel(((144px-106px)/2,14px,0,24px),$max_width);
+    }
+
+    #logo_footer_txt{
+      float:left;
+      margin-top:rel(34px,$max_width);
+      margin-left:rel(10px,$max_width);
+      font-size:rel(20px,$font,1em);
+      color:#606060;
+
+      span{
+        font-size:rel(38px,20px,1em);
+      }
+    }
+  }
+
+  a{
+    display: block;
+    width: rel(178px,$max_width);
+    padding-bottom: rel(60px,$max_width);
+    position: absolute;
+    top:rel(44px,144px);
+    right:rel(44px,$max_width);
+
+    &#button_footer{
+      background: url($r_url + "m/start_mobile_2.png") center no-repeat;
+      background-size: contain;
+    }
+  }
+}

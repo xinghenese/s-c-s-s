@@ -1,0 +1,9 @@
+//Type Conversion
+
+@import "type-check";
+
+@function get($var,$type:false){
+  @if not $type{
+    @return $var;
+  }
+}

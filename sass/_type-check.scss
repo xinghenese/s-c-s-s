@@ -1,0 +1,45 @@
+//Type Check
+
+//list of type
+$arr_type:number string color bool list map;
+//type check of single variables
+@function _isCertainType($var, $n:1){
+  $r:false;
+  @if variable_exists(var){
+    $r:type-of($var)==nth($arr_type, $n);
+  }
+  @return $r;
+}
+//type check of some variables
+@function _isType($n, $vars...){
+  @each $var in $vars{
+    @if not _isCertainType($var, $n){
+      @return false;
+    }
+  }
+  @return true;
+}
+//certain type check of some variables
+@function isNumber($vars...){
+  @return _isType(1, $vars...);
+}
+@function isString($vars...){
+  @return _isType(2, $vars...);
+}
+@function isColor($vars...){
+  @return _isType(3, $vars...);
+}
+@function isBoollean($vars...){
+  @return _isType(4, $vars...);
+}
+@function isList($vars...){
+  @return _isType(5, $vars...);
+}
+@function isMap($vars...){
+  @return _isType(6, $vars...);
+}
+
+//determine if the variables is a number with given unit
+@function hasUnit($var,$unit:px){
+  @return isNumber($var) and unit($var)==$unit;
+}

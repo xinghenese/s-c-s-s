@@ -1,0 +1,6 @@
+a {
+  background: #000000 url(m/exmple.png) left top;
+  background-size: contain;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader( src="m/exmple.png",sizingMethod="scale"); }
+
+/*# sourceMappingURL=test.css.map */
