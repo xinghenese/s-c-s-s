@@ -10,10 +10,13 @@
 
 //calculate the amount of #{$raw} relative to #{$base} followed with the given #{$unit}
 //@param
-//  $raw: a number or an array inclusive of numbers
+//  $raw: a number or a list inclusive of numbers
 //  $base: a number $raw relates to
 //  $unit: a number valued as 100%, 1em, 1px... and 100% as default
-//  $is-tolerant:
+//  $is-tolerant: a boolean that for true the invalid items of $raw, each of which is not a number nor comparable with $base(has
+//    same unit with $base), would reverse in the result, and for otherwise the invalid items would be rejected.
+//@return
+//  a relative amount or a list inclusive of relative amount.
 @function relative($raw, $base, $unit:100%, $is-tolerant:false){
   $result:$raw;
   @if isNumber($base, $unit){
@@ -34,6 +37,8 @@
   }
   @return $result;
 }
+
+//a same function as #{@function relative} with abbreviated name.
 @function rel($raw, $base, $unit:100%){
   @return relative($raw, $base, $unit);
 }
@@ -48,6 +53,9 @@ $key-maps:(
         p:padding,pd:padding,pad:padding,pdn:padding,padding:padding
 );
 
+//calculate the relative layout
+//@param
+//  $abs-child: a map with keys which stands for some properties of l
 @mixin relLayout($abs-child,$abs-parent){
   @if & and isMap($abs-child,$abs-parent){
     //set relative layout property.
