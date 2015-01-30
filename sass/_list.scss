@@ -2,14 +2,83 @@
 
 @import "type-check";
 
-//determine if the item of the list exists
-@function hasItem($list,$index){
+@function isEmptyList($list){
+  @return isList($list) and length($list)==0;
+}
+
+@function isNonEmptyList($list){
+  @return isList($list) and length($list)>0;
+}
+
+@function isInBounds($list,$index){
   @return isList($list) and hasUnit($index,"") and length($list)>=$index;
 }
 
+//determine if the item of the list exists
+@function hasItem($list,$item){
+  @if isList($list){
+    @each $element in $list{
+      @if $element==$item{
+        @return true;
+      }
+    }
+  }
+  @return false;
+//  @return isList($list) and hasUnit($index,"") and length($list)>=$index;
+}
+
+
+//function for all items
+//test all items
+@function testAllItems($list,$test){
+  $result:false;
+  @if isList($list) and function_exists($test){
+    $result:true;
+    @each $item in $list{
+      @if not call($test,$item){
+        $result:false;
+      }
+    }
+  }
+  @return $result;
+}
+
+//test some items
+@function testSomeItem($list,$test){
+  $result:false;
+  @if isList($list) and function_exists($test){
+    @each $item in $list{
+      @if call($test,$item){
+        $result:true;
+      }
+    }
+  }
+  @return $result;
+}
+
+//filter all items
+@function filterItems($list,$filter){
+  $result:();
+  @if isList($list) and function_exists($filter){
+    @each $item in $list{
+      @if call($filter,$item){
+        $result:append($result,$item);
+      }
+    }
+  }
+  @return $result;
+}
+
+@function processAllItems($list,$process){
+
+}
+
+
+
 //determine if the item of the list passes the test implemented by the given $filter function
 @function hasItemByFilter($list,$index,$filter,$args...){
-  @return hasItem($list,$index) and function_exists($filter) and call($filter,nth($list,$index),$args...);
+//  @return hasItem($list,$index) and function_exists($filter) and call($filter,nth($list,$index),$args...);
+  @return isInBounds($list,$index) and function_exists($filter) and call($filter,nth($list,$index),$args...);
 }
 
 //determine if the item of the list is a plain number

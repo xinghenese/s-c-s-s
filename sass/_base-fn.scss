@@ -1,5 +1,7 @@
 @charset "utf-8";
 @import "type-check";
+@import "list";
+@import "map";
 @import "debug";
 
 @mixin container{
@@ -7,6 +9,78 @@
   height:0;
   margin:0 auto;
 }
+
+$layout-relative-base-list: (
+        width,height,font-size
+);
+$layout-related-to-width-list: (
+        width,min-width,max-width,left,right,
+        margin,margin-top,margin-right,margin-bottom,margin-left,
+        padding,padding-top,padding-right,padding-bottom,padding-left
+);
+$layout-related-to-height-list: (
+        height,max-height,min-height,top,bottom
+);
+$layout-related-to-font-list:(
+        line-height,word-spacing,letter-spacing,
+        max-width,min-width,max-height,min-height,
+        border-top-width,border-right-width,border-left-width,border-bottom-width,border-width,
+        border-top-left-radius,border-top-right-radius,border-bottom-left-radius,border-bottom-left-radius,
+        border-radius
+);
+
+$layout-name-component-maps:(
+  //layout box type
+        w:width,wd:width,width:width,
+        h:height,hg:height,height:height,
+        m:margin,mr:margin,mar:margin,mgn:margin,margin:margin,
+        p:padding,pd:padding,pad:padding,pdn:padding,padding:padding,
+        bd:border,bo:border,brd:border,bord:border,border:border,
+        ra:radius,rd:radius,radius:radius,
+
+  //layout text type
+        wr:word,wor:word,word:word,
+        le:letter,let:letter,letter:letter,
+        f:font,ft:font,font:font,
+        ln:line,line:line,
+        s:size,sz:size,size:size,
+        sp:spacing,space:spacing,spacing:spacing,
+        c:count,co:count,coun:count,count:count,
+
+  //layout direction
+        t:top,tp:top,top:top,
+        b:bottom,bt:bottom,bot:bottom,btm:bottom,bottom:bottom,
+        l:left,lt:left,lft:left,left:left,
+        r:right,rt:right,rgt:right,right:right
+);
+
+@function parseKeyName($key){
+  $result:'';
+  @while str-index($key,'-'){
+    $separator-index:str-index($key,'-');
+    $temp:selectKey($layout-name-component-maps,str-slice($key,1,$separator-index+-1));
+    @if $temp{
+      $result:$result+'-'+$temp;
+    }
+    $key:str-slice($key,$separator-index+1);
+  }
+  $result:$result+'-'+selectKey($layout-name-component-maps,$key,'');
+  @return unquote(str-slice($result,2));
+}
+
+@function parseMap($map){
+  $result:();
+  @if isMap($map){
+    @each $key,$value in $map{
+      $key:parseKeyName($key);
+      @if $key!=''{
+        $result:map-merge($result,(#{$key}:$value));
+      }
+    }
+  }
+  @return $result;
+}
+
 
 //calculate the amount of #{$raw} relative to #{$base} followed with the given #{$unit}
 //@param
@@ -18,13 +92,20 @@
 //@return
 //  a relative amount or a list inclusive of relative amount.
 @function relative($raw, $base, $unit:100%, $is-tolerant:false){
-  $result:$raw;
+  $result:();
+  @if isMap($base){
+    $base:parseMap($base);
+    //parseMap would return an empty map:() in some case.However,type-of(())==list,thus we should check it again.
+    @if isMap($base){
+      $base:if($unit==1em,map-get($base,font-size),
+              if($unit==100%,map-get($base,width),null));
+    }
+  }
   @if isNumber($base, $unit){
     @if isNumber($raw) and comparable($raw, $base){
       $result: if($raw!=0,$raw/$base*$unit,0);
     }
     @else if isList($raw){
-      $result:();
       @each $r in $raw{
         @if isNumber($r) and comparable($r, $base){
           $result: append($result, if($r!=0,$r/$base*$unit,0));
@@ -35,23 +116,13 @@
       }
     }
   }
-  @return $result;
+  @return if(isEmptyList($result),null,$result);
 }
 
 //a same function as #{@function relative} with abbreviated name.
 @function rel($raw, $base, $unit:100%){
   @return relative($raw, $base, $unit);
 }
-
-$arr_layout: width,margin,padding,margin-top,margin-right,margin-bottom,margin-left,
-  padding-top,padding-right,padding-bottom,padding-left;
-
-$key-maps:(
-        w:width,wd:width,width:width,
-        h:height,hg:height,height:height,
-        m:margin,mr:margin,mar:margin,mgn:margin,margin:margin,
-        p:padding,pd:padding,pad:padding,pdn:padding,padding:padding
-);
 
 //calculate the relative layout
 //@param
@@ -60,13 +131,28 @@ $key-maps:(
   @if & and isMap($abs-child,$abs-parent){
     //set relative layout property.
     //all these relative layout property is percentage of absolute property to width of parent element
-    @if hasKeyWithUnit($abs-parent,width){
-      $parent-width:map-get($abs-parent,width);
-      @each $prop in $arr_layout{
-        @if hasKeyWithUnit($abs-child,$prop){
-          #{$prop}:rel(map-get($abs-child,$prop),$parent-width);
+    $parent-width:null;
+    @each $key,$value in $abs-parent{
+      @if parseKeyName($key)==width and hasUnit($value){
+        $parent-width:$value;
+      }
+    }
+    @if $parent-width{
+      @each $key,$value in $abs-child{
+        $key:parseKeyName($key);
+        //test if the key 
+        @if hasItem($layout-related-to-width-list,$key){
+          $value:rel($value,$parent-width);
+          @if $value{
+            #{$key}:$value;
+          }
         }
       }
+//      @each $prop in $layout-related-to-width-list{
+//        @if hasKeyWithUnit($abs-child,parseKeyName($prop)){
+//          #{$prop}:rel(map-get($abs-child,$prop),$parent-width);
+//        }
+//      }
     }
   }
 }
@@ -125,8 +211,21 @@ $key-maps:(
         }
       }
       //set min-width;
-      @if hasKeyWithUnit($abs-child,letter-count, ""){
-        min-width: map-get($abs-child,letter-count) * 1em;
+      @if hasKey($abs-child,letter-count){
+        $letter-count:map-get($abs-child,letter-count);
+        @if hasUnit($letter-count,''){
+          min-width: $letter-count * 1em;
+        }
+        @else if isList($letter-count){
+          $count-1:selectItemWithUnit($letter-count,1,null,'');
+          $count-2:selectItemWithUnit($letter-count,2,null,'');
+          @if $count-1{
+            min-width: $count-1 * 1em;
+          }
+          @if $count-2{
+            max-width: $count-2 * 1em;
+          }
+        }
       }
       //adjust vertical margin or padding since presence of line-padding
       @if $line-padding>0 and hasKeyWithUnit($abs-parent,width){

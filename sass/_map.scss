@@ -26,13 +26,13 @@
 
 //determine if the value associated with the key of the map is a number with given unit
 @function hasKeyWithUnitForAll($map-list,$key-list,$unit:px){
-  $r:false;
+  $r:true;
   $maps:if(isList($map-list),$map-list,($map-list));
   $keys:if(isList($key-list),$key-list,($key-list));
   @each $map in $maps{
     @each $key in $keys{
-      @if hasKeyWithUnit($map,$key,$unit){
-        $r:true;
+      @if not hasKeyWithUnit($map,$key,$unit){
+        $r:false;
       }
     }
   }
@@ -52,7 +52,7 @@
   @return $default;
 }
 //
-@function selectKeyByFilter($map,$key-list,$filter, $default:null, $args...){
+@function selectKeyByFilter($map,$key-list,$filter,$default:null, $args...){
   @if isMap($map) and (not isMap($key-list)){
     $keys:if(isList($key-list),$key-list,($key-list));
     @each $key in $keys{
