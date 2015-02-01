@@ -22,8 +22,8 @@ $layout-related-to-height-list: (
         height,max-height,min-height,top,bottom
 );
 $layout-related-to-font-list:(
+        width,height,max-width,min-width,max-height,min-height,
         line-height,word-spacing,letter-spacing,
-        max-width,min-width,max-height,min-height,
         border-top-width,border-right-width,border-left-width,border-bottom-width,border-width,
         border-top-left-radius,border-top-right-radius,border-bottom-left-radius,border-bottom-left-radius,
         border-radius

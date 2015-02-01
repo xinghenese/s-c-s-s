@@ -7,3 +7,20 @@
     @return $var;
   }
 }
+
+@function toBoolean($var){
+  @each $item in (false null 0 '' () #000000){
+    @if $var==$item{
+      @return false;
+    }
+  }
+  @return true;
+}
+
+@function toNumber($var){
+
+}
+
+@function toString($var){
+
+}

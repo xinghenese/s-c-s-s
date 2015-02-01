@@ -1,12 +1,12 @@
 //Type Check
 
 //list of type
-$arr_type:number string color bool list map;
+$type-list:number string color bool list map;
 //type check of single variables
 @function _isCertainType($var, $n:1){
   $r:false;
   @if variable_exists(var){
-    $r:type-of($var)==nth($arr_type, $n);
+    $r:type-of($var)==nth($type-list, $n);
   }
   @return $r;
 }
@@ -37,6 +37,51 @@ $arr_type:number string color bool list map;
 }
 @function isMap($vars...){
   @return _isType(6, $vars...);
+}
+
+@function isEmptyList($vars...){
+  @each $var in $vars{
+    @if not (isList($var) and length($var)==0){
+      @return false;
+    }
+  }
+  @return true;
+}
+
+@function isNonEmptyList($vars...){
+  @each $var in $vars{
+    @if not (isList($var) and length($var)>0){
+      @return false;
+    }
+  }
+  @return true;
+}
+
+
+//check type
+@function checkType($n,$vars...){
+  @if not _isType($n,$vars...){
+    @error 'Invalid type of #{$vars}. Parameters of #{nth($type-list,$n)} type required.';
+  }
+  @return true;
+}
+@function checkNumber($vars...){
+  @return checkType(1, $vars...);
+}
+@function checkString($vars...){
+  @return checkType(2, $vars...);
+}
+@function checkColor($vars...){
+  @return checkType(3, $vars...);
+}
+@function checkBoollean($vars...){
+  @return checkType(4, $vars...);
+}
+@function checkList($vars...){
+  @return checkType(5, $vars...);
+}
+@function checkMap($vars...){
+  @return checkType(6, $vars...);
 }
 
 //determine if the variables is a number with given unit
