@@ -126,6 +126,21 @@ $type-list:number string color bool list map;
   @return _check-type-and-warn(6, $var,$warn);
 }
 
+//check multiple type
+@function check-multiple-type($var,$types...){
+  $check:false;
+  @each $type in $types{
+    @if check-string($type) and index($type-list,to-lower-case($type)) and
+    call('is-#{to-lower-case($type)}',$var){
+      $check:true;
+    }
+  }
+  @if not $check{
+    @error '#{$var} is not type of one of the (#{inspect($types)})';
+  }
+  @return true;
+}
+
 
 
 //determine if the variables is a number with given unit

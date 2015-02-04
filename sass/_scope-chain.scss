@@ -9,7 +9,7 @@
 
 $global:(width:640px,font-size:32px);
 
-$layout-mixin-list: 'relative-layout' 'relative-content-box' 'relative-box' 'shape-box';
+$layout-mixin-list: 'relative' 'relative-layout' 'relative-content-box' 'relative-box' 'shape-box';
 
 @function get-ancestor($selector){
   $check: check-local-scope();
@@ -32,7 +32,8 @@ $layout-mixin-list: 'relative-layout' 'relative-content-box' 'relative-box' 'sha
 }
 
 @mixin layout($layout-mixin,$self-layout){
-  $check: check-string($layout-mixin) check-map($self-layout) check-local-scope() create-scopes-if-not-exists();
+  $check: check-string($layout-mixin) check-multiple-type($self-layout,map,number) check-local-scope()
+    create-scopes-if-not-exists();
 
   @if index($layout-mixin-list,$layout-mixin){
 
@@ -41,24 +42,34 @@ $layout-mixin-list: 'relative-layout' 'relative-content-box' 'relative-box' 'sha
       $ancestor:get-ancestor($selector);
       @warn '$ancestor: #{to-string($ancestor)}';
 
-      @if $layout-mixin=='relative-layout'{
-        @include relative-layout($self-layout,$ancestor);
+      @if is-number($self-layout){
+        @if $layout-mixin=='relative'{
+          @include relative($self-layout,$ancestor);
+        }
       }
-      @else if $layout-mixin=='relative-box'{
-        @include relative-box($self-layout,$ancestor);
-      }
-      @else if $layout-mixin=='relative-content-box'{
-        @include relative-content-box($self-layout,$ancestor);
-      }
-      @else if $layout-mixin=='shape-box'{
-        @include shape-box($self-layout,$ancestor);
+      @else{
+        @if $layout-mixin=='relative-layout'{
+          @include relative-layout($self-layout,$ancestor);
+        }
+        @else if $layout-mixin=='relative-box'{
+          @include relative-box($self-layout,$ancestor);
+        }
+        @else if $layout-mixin=='relative-content-box'{
+          @include relative-content-box($self-layout,$ancestor);
+        }
+        @else if $layout-mixin=='shape-box'{
+          @include shape-box($self-layout,$ancestor);
+        }
       }
 
-      $self:map-select-pairs-with-unit($self-layout,$ancestor,'px',$ancestor);
-      @warn '#{to-string($scope-chain)}';
+      //add the current scope into the $scope-chain only once.
+      @if not map-has-key($scope-chain, list-to-string($selector)){
+        $self:map-select-pairs-with-unit($self-layout,$ancestor,'px',$ancestor);
+        @warn '#{to-string($scope-chain)}';
 
-      $scope-chain:map-merge($scope-chain,(list-to-string($selector):$self)) !global;
-      @warn '#{to-string($scope-chain)}';
+        $scope-chain:map-merge($scope-chain,(list-to-string($selector):$self)) !global;
+        @warn '#{to-string($scope-chain)}';
+      }
     }
 
   }

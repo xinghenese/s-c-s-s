@@ -1,10 +1,11 @@
 @charset "utf-8";
+
+///Layout Base
+
 @import "type-check";
-@import "list";
-@import "map";
+@import "stringify";
 @import "new-map";
 @import "new-list";
-@import "debug";
 
 @mixin container{
   width:100%;
@@ -57,16 +58,15 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
 );
 
 @function _parse-key-name($key){
+  $check: check-string($key);
   $result:'';
-  @while str-index($key,'-'){
-    $separator-index:str-index($key,'-');
-    $temp:map-select-key($LAYOUT_NAME_COMPONENT_MAPS,str-slice($key,1,$separator-index+-1));
+  $key-component-list: str-split($key,'-');
+  @each $item in $key-component-list{
+    $temp:map-select-key($LAYOUT_NAME_COMPONENT_MAPS,$item);
     @if $temp{
       $result:$result+'-'+$temp;
     }
-    $key:str-slice($key,$separator-index+1);
   }
-  $result:$result+'-'+map-select-key($LAYOUT_NAME_COMPONENT_MAPS,$key,'');
   @return unquote(str-slice($result,2));
 }
 
