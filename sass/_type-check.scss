@@ -3,7 +3,7 @@
 //list of type
 $type-list:number string color bool list map;
 //type check of single variables
-@function _isCertainType($var, $n:1){
+@function _is-certain-type($var, $n:1){
   $r:false;
   @if variable_exists(var){
     $r:type-of($var)==nth($type-list, $n);
@@ -11,46 +11,46 @@ $type-list:number string color bool list map;
   @return $r;
 }
 //type check of some variables
-@function _isType($n, $vars...){
+@function _is-type($n, $vars...){
   @each $var in $vars{
-    @if not _isCertainType($var, $n){
+    @if not _is-certain-type($var, $n){
       @return false;
     }
   }
   @return true;
 }
 //certain type check of some variables
-@function isNumber($vars...){
-  @return _isType(1, $vars...);
+@function is-number($vars...){
+  @return _is-type(1, $vars...);
 }
-@function isString($vars...){
-  @return _isType(2, $vars...);
+@function is-string($vars...){
+  @return _is-type(2, $vars...);
 }
-@function isColor($vars...){
-  @return _isType(3, $vars...);
+@function is-color($vars...){
+  @return _is-type(3, $vars...);
 }
-@function isBoollean($vars...){
-  @return _isType(4, $vars...);
+@function is-boolean($vars...){
+  @return _is-type(4, $vars...);
 }
-@function isList($vars...){
-  @return _isType(5, $vars...);
+@function is-list($vars...){
+  @return _is-type(5, $vars...);
 }
-@function isMap($vars...){
-  @return _isType(6, $vars...);
+@function is-map($vars...){
+  @return _is-type(6, $vars...);
 }
 
-@function isEmptyList($vars...){
+@function is-empty-list($vars...){
   @each $var in $vars{
-    @if not (isList($var) and length($var)==0){
+    @if not (is-list($var) and length($var)==0){
       @return false;
     }
   }
   @return true;
 }
 
-@function isNonEmptyList($vars...){
+@function is-non-empty-list($vars...){
   @each $var in $vars{
-    @if not (isList($var) and length($var)>0){
+    @if not (is-list($var) and length($var)>0){
       @return false;
     }
   }
@@ -59,32 +59,87 @@ $type-list:number string color bool list map;
 
 
 //check type
-@function checkType($n,$vars...){
-  @if not _isType($n,$vars...){
-    @error 'Invalid type of #{$vars}. Parameters of #{nth($type-list,$n)} type required.';
+@function _check-type($n,$vars...){
+  @each $var in $vars{
+    @if not _is-certain-type($var, $n){
+      @error 'Invalid type of #{inspect($var)}. Parameters of #{inspect(nth($type-list,$n))} type required.';
+    }
   }
   @return true;
 }
-@function checkNumber($vars...){
-  @return checkType(1, $vars...);
+@function check-number($vars...){
+  @return _check-type(1, $vars...);
 }
-@function checkString($vars...){
-  @return checkType(2, $vars...);
+@function check-string($vars...){
+  @return _check-type(2, $vars...);
 }
-@function checkColor($vars...){
-  @return checkType(3, $vars...);
+@function check-color($vars...){
+  @return _check-type(3, $vars...);
 }
-@function checkBoollean($vars...){
-  @return checkType(4, $vars...);
+@function check-boolean($vars...){
+  @return _check-type(4, $vars...);
 }
-@function checkList($vars...){
-  @return checkType(5, $vars...);
+@function check-list($vars...){
+  @return _check-type(5, $vars...);
 }
-@function checkMap($vars...){
-  @return checkType(6, $vars...);
+@function check-map($vars...){
+  @return _check-type(6, $vars...);
 }
 
+@function check-function-exist($functions...){
+  $check:true;
+  @each $function in $functions{
+    @if not function-exists($function){
+      @error 'function #{$function}() does not exist.';
+    }
+  }
+  @return true;
+}
+
+
+//check type and warn
+@function _check-type-and-warn($n,$var,$warn:false){
+  @if not _is-certain-type($var, $n){
+    @if $warn{
+      @warn 'Dreprecated type of #{inspect($var)}. Parameters of #{inspect(nth($type-list,$n))} type recommended.';
+    }
+    @return false;
+  }
+  @return true;
+}
+@function check-number-and-warn($var,$warn:false){
+  @return _check-type-and-warn(1, $var,$warn);
+}
+@function check-string-and-warn($var,$warn:false){
+  @return _check-type-and-warn(2, $var,$warn);
+}
+@function check-color-and-warn($var,$warn:false){
+  @return _check-type-and-warn(3, $var,$warn);
+}
+@function check-boolean-and-warn($var,$warn:false){
+  @return _check-type-and-warn(4, $var,$warn);
+}
+@function check-list-and-warn($var,$warn:false){
+  @return _check-type-and-warn(5, $var,$warn);
+}
+@function check-map-and-warn($var,$warn:false){
+  @return _check-type-and-warn(6, $var,$warn);
+}
+
+
+
 //determine if the variables is a number with given unit
-@function hasUnit($var,$unit:px){
-  @return isNumber($var) and unit($var)==$unit;
+@function has-unit($var,$unit:px){
+  @return is-number($var) and unit($var)==$unit;
+}
+
+
+
+//check local scope
+@function check-local-scope(){
+  @if not &{
+    @error 'could not work in global scope';
+  }
+//  @warn '#{&}';
+  @return true;
 }

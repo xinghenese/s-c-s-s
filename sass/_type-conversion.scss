@@ -8,8 +8,11 @@
   }
 }
 
-@function toBoolean($var){
-  @each $item in (false null 0 '' () #000000){
+@function to-boolean($var,$warn:false){
+  @if check-boolean-and-warn($var,$warn){
+    @return $var;
+  }
+  @each $item in (() false null 0 '' #000000){
     @if $var==$item{
       @return false;
     }
@@ -17,10 +20,24 @@
   @return true;
 }
 
-@function toNumber($var){
+@function to-number($var){
 
 }
 
-@function toString($var){
+@function to-string($var){
+  @return inspect($var);
+}
 
+@function to-list($var,$warn:false){
+  @if check-list-and-warn($var,$warn){
+    @return $var;
+  }
+  @if is-map($var){
+    @return map-keys($var);
+  }
+  //parens are not what define lists; it’s the delimiter (commas/spaces)
+  //see http://hugogiraudel.com/2013/11/28/sass-brainfuck/
+  //type-of(($var)) == type-of($var);
+  //type-of(append((),$var)) == list
+  @return append((),$var);
 }

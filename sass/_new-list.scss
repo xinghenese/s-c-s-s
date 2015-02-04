@@ -3,51 +3,33 @@
 @import 'type-check';
 @import 'type-conversion';
 
-@function list-has-item($list,$item){
-  @if not isList($list){
-    @error 'Invalid type of $list:#{$list}. Parameter of list type required.';
-  }
-  @each $element in $list{
-    @if $element==$item{
-      @return true;
-    }
-  }
-  @return false;
-}
-
 @function list-in-bounds($list,$index){
-  @return checkList($list) and checkNumber($index) and $index>0 and length($list)>=$index;
+  $check:check-list($list) check-number($index);
+  @if not ($index>0 and length($list)>=$index){
+    @error 'out of bounds of #{$list}';
+  }
+  @return  true;
 }
 
-@function list-test($list,$item-list,$filter:list-has-item,$greed:false,$args...){
-  @if not isList($list){
-    @error 'Wrong type of $list:#{$list}. Parameter of list type required.';
-  }
-  @if not function_exists($filter){
-    @error 'function #{$filter} does not exist.';
-  }
-  @if not isBoollean($greed){
-    @warn 'Dreprecated type of $greed:#{$greed}. Parameter of boolean type recommended.';
-    $greed:toBoolean($greed);
-  }
-  @if isMap($item-list){
-    @warn 'Dreprecated type of $item-list:#{$item-list}. Parameter of list or string type recommended.';
-    $item-list:map-keys($item-list);
-  }
-  $item-list:if($item-list==(),$list,$item-list);
-//  @if $item-list==(){
-//    @error 'Empty list type of $item-list:#{$item-list} rejected';
-//  }
-  $items:if(isList($item-list),$item-list,($item-list));
+@function list-test($list,$item-list,$filter:index,$greed:false,$args...){
+  //check whether parameters: $list, $filter are in valid type.
+  $check:check-list($list) check-function-exist($filter);
+  //check whether parameters: $greed, $item-list are in valid type. If invalid, give out warnings and convert them into
+  //the required type.
+  $greed: to-boolean($greed,true);
+  $item-list: to-list($item-list,true);
+  //check whether $item-list is an empty list. If so, assign it a reference of $list, which means we only test the $list
+  //itself regardless of the candidate list: $item-list.
+  $items:if($item-list==(),$list,$item-list);
   $result:$greed;
   @each $item in $items{
     @if $greed{
-      @if not toBoolean(call($filter,$list,$item,$args...)){
+      @if not to-boolean(call($filter,$list,$item,$args...)){
         @return false;
       }
     }
     @else{
-      @if list-has-item($list,$item) and toBoolean(call($filter,$list,$item,$args...)){
+      @if to-boolean(call($filter,$list,$item,$args...)){
         @return true;
       }
     }
@@ -58,29 +40,19 @@
 @function _list-get($list,$item){
   @return $item;
 }
-@function list-match($list,$item-list,$default:null,$filter:list-has-item,$process:_list-get,$greed:false,$args...){
-  @if not isList($list){
-    @error 'Wrong type of $list:#{$list}. Parameter of map type required.';
-  }
-  @if not function_exists($filter){
-    @error 'function #{$filter} does not exist.';
-  }
-  @if not isBoollean($greed){
-    @warn 'Dreprecated type of $greed:#{$greed}. Parameter of boolean type recommended.';
-    $greed:toBoolean($greed);
-  }
-  @if isMap($item-list){
-    @warn 'Dreprecated type of $item-list:#{$item-list}. Parameter of list or string type recommended.';
-    $item-list:map-keys($item-list);
-  }
-  $item-list:if($item-list==(),$list,$item-list);
-  //  @if $item-list==(){
-  //    @error 'Empty list type of $item-list:#{$item-list} rejected';
-  //  }
-  $items:if(isList($item-list),$item-list,($item-list));
+@function list-match($list,$item-list,$default:null,$filter:index,$process:_list-get,$greed:false,$args...){
+  //check whether parameters: $list, $filter are in valid type.
+  $check:check-list($list) check-function-exist($filter);
+  //check whether parameters: $greed, $item-list are in valid type. If invalid, give out warnings and convert them into
+  //the required type.
+  $greed: to-boolean($greed,true);
+  $item-list: to-list($item-list,true);
+  //check whether $item-list is an empty list. If so, assign it a reference of $list, which means we only test the $list
+  //itself regardless of the candidate list: $item-list.
+  $items:if($item-list==(),$list,$item-list);
   $result:();
   @each $item in $items{
-    @if list-has-item($list,$item) and toBoolean(call($filter,$list,$item,$args...)){
+    @if to-boolean(call($filter,$list,$item,$args...)){
       $result-item:call($process,$list,$item);
       @if $greed{
         $result:append($result,$result-item);
@@ -94,6 +66,20 @@
   @return if($result!=(),$result,$default);
 }
 
+@function list-slice($list,$start,$end:0){
+  $end:if($end>0,$end,length($list)+$end);
+  $check:check-list($list) check-number($start,$end) list-in-bounds($list,$end);
+//  $end:if($end==0,length($list),$end);
+  $result:();
+  @for $i from $start through $end{
+    $result:append($result,nth($list,$i));
+  }
+  @return $result;
+}
+
+@function list-pop($list){
+
+}
 
 @function list-test-all($list,$filter,$args...){
   @return list-test($list,(),$filter,true,$args...);
@@ -102,10 +88,22 @@
   @return list-test($list,(),$filter,false,$args...);
 }
 
+@function  _list-item-has-unit($list,$item,$unit:px){
+  @return index($list,$item) and has-unit($item,$unit);
+}
+@function  _list-item-has-unit-by-index($list,$index,$unit:px){
+  @return list-in-bounds($list,$index) and has-unit(nth($list,$index),$unit);
+}
 @function list-select-item-by-index($list,$index-list,$greed:false,$default:null){
   @return list-match($list,$index-list,$default,list-in-bounds,nth,$greed);
+}
+@function list-select-item-with-unit-by-index($list,$index-list,$unit:px,$greed:false,$default:null){
+  @return list-match($list,$index-list,$default,_list-item-has-unit,nth,$greed,$unit);
 }
 
 @function list-filter-items($list,$default,$filter,$args...){
   @return list-match($list,(),$default,$filter,_list-get,true,$args...);
+}
+@function list-select-item-with-unit($list,$unit:px,$default:null){
+  @return list-filter-items($list,$default,_list-item-has-unit,$unit)
 }

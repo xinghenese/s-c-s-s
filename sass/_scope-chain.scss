@@ -1,0 +1,65 @@
+///Scope Chain
+
+@import "type-check";
+@import "type-conversion";
+@import "stringify";
+@import "new-list";
+@import "new-map";
+@import "base-fn";
+
+$global:(width:640px,font-size:32px);
+
+$layout-mixin-list: 'relative-layout' 'relative-content-box' 'relative-box' 'shape-box';
+
+@function get-ancestor($selector){
+  $check: check-local-scope();
+  $ancestors: $selector;
+  @while length($ancestors)>1{
+    $ancestors:list-slice($ancestors,1,-1);
+    $ancestor:map-get($scope-chain,list-to-string($ancestors));
+    @if $ancestor{
+      @return $ancestor;
+    }
+  }
+  @return map-get($scope-chain,global);
+}
+
+@function create-scopes-if-not-exists(){
+  @if not global-variable-exists(scope-chain){
+    $scope-chain:(global:$global) !global;
+  }
+  @return true;
+}
+
+@mixin layout($layout-mixin,$self-layout){
+  $check: check-string($layout-mixin) check-map($self-layout) check-local-scope() create-scopes-if-not-exists();
+
+  @if index($layout-mixin-list,$layout-mixin){
+
+    //invoke layout-mixin accordingly
+    @each $selector in &{
+      $ancestor:get-ancestor($selector);
+      @warn '$ancestor: #{to-string($ancestor)}';
+
+      @if $layout-mixin=='relative-layout'{
+        @include relative-layout($self-layout,$ancestor);
+      }
+      @else if $layout-mixin=='relative-box'{
+        @include relative-box($self-layout,$ancestor);
+      }
+      @else if $layout-mixin=='relative-content-box'{
+        @include relative-content-box($self-layout,$ancestor);
+      }
+      @else if $layout-mixin=='shape-box'{
+        @include shape-box($self-layout,$ancestor);
+      }
+
+      $self:map-select-pairs-with-unit($self-layout,$ancestor,'px',$ancestor);
+      @warn '#{to-string($scope-chain)}';
+
+      $scope-chain:map-merge($scope-chain,(list-to-string($selector):$self)) !global;
+      @warn '#{to-string($scope-chain)}';
+    }
+
+  }
+}

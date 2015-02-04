@@ -15,14 +15,14 @@ $_position:(
   @return selectKey($_position,$pos,center);
 }
 @function pos($pos:center center){
-  @if isList($pos){
+  @if is-list($pos){
     //if an item of $pos is a number, then return its original value, else process it as a position string and
     //return the processed result
     $pos-x:processSelectedItemByFilter($pos,1,isNumber,get,_pos,center);
     $pos-y:processSelectedItemByFilter($pos,2,isNumber,get,_pos,center);
     @return ($pos-x $pos-y);
   }
-  $pos:if(isNumber($pos),$pos, _pos($pos));
+  $pos:if(is-number($pos),$pos, _pos($pos));
   @return ($pos center);
 }
 
@@ -46,17 +46,17 @@ $_size:(
   @return selectKey($_size,$size,contain);
 }
 @function size($size:contain){
-  @if isList($size){
+  @if is-list($size){
     //if an item of $pos is a number, then return its original value, else process it as a position string and
     //return the processed result
     $size-x:processSelectedItemByFilter($size,1,isNumber,get,_size,contain);
     $size-y:processSelectedItemByFilter($size,2,isNumber,get,_size,contain);
     @return ($size-x $size-y);
   }
-  @else if isNumber($size){
+  @else if is-number($size){
     @return $size;
   }
-  $size:if(isNumber($size),$size, _size($size));
+  $size:if(is-number($size),$size, _size($size));
   @return $size;
 }
 
