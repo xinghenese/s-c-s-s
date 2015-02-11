@@ -3,20 +3,20 @@
 @import "type-check";
 
 @function isEmptyList($list){
-  @return isList($list) and length($list)==0;
+  @return is-list($list) and length($list)==0;
 }
 
 @function isNonEmptyList($list){
-  @return isList($list) and length($list)>0;
+  @return is-list($list) and length($list)>0;
 }
 
 @function isInBounds($list,$index){
-  @return isList($list) and hasUnit($index,"") and length($list)>=$index;
+  @return is-list($list) and has-unit($index,"") and length($list)>=$index;
 }
 
 //determine if the item of the list exists
 @function hasItem($list,$item){
-  @if isList($list){
+  @if is-list($list){
     @each $element in $list{
       @if $element==$item{
         @return true;
@@ -24,7 +24,7 @@
     }
   }
   @return false;
-//  @return isList($list) and hasUnit($index,"") and length($list)>=$index;
+//  @return isList($list) and has-unit($index,"") and length($list)>=$index;
 }
 
 
@@ -32,7 +32,7 @@
 //test all items
 @function testAllItems($list,$test){
   $result:false;
-  @if isList($list) and function_exists($test){
+  @if is-list($list) and function_exists($test){
     $result:true;
     @each $item in $list{
       @if not call($test,$item){
@@ -46,7 +46,7 @@
 //test some items
 @function testSomeItem($list,$test){
   $result:false;
-  @if isList($list) and function_exists($test){
+  @if is-list($list) and function_exists($test){
     @each $item in $list{
       @if call($test,$item){
         $result:true;
@@ -59,7 +59,7 @@
 //filter all items
 @function filterItems($list,$filter){
   $result:();
-  @if isList($list) and function_exists($filter){
+  @if is-list($list) and function_exists($filter){
     @each $item in $list{
       @if call($filter,$item){
         $result:append($result,$item);
@@ -94,8 +94,8 @@
 
 //select a valid item of the list from the candidate list of indexes and return the valid item
 @function selectItem($list,$index-list,$default:null){
-  @if isList($list) and (not isMap($index-list)){
-    $indexes:if(isList($index-list),$index-list,($index-list));
+  @if is-list($list) and (not is-map($index-list)){
+    $indexes:if(is-list($index-list),$index-list,($index-list));
     @each $index in indexes{
       @if hasItem($list,$index){
         @return nth($list,$index);
@@ -108,8 +108,8 @@
 //select a valid item of the list from the candidate list of indexes and return the valid item if passing the test
 //implemented by the given $filter function
 @function selectItemByFilter($list,$index-list,$filter,$default:null,$args...){
-  @if isList($list) and (not isMap($index-list)){
-    $indexes:if(isList($index-list),$index-list,($index-list));
+  @if is-list($list) and (not is-map($index-list)){
+    $indexes:if(is-list($index-list),$index-list,($index-list));
     @each $index in indexes{
       @if hasItemByFilter($list,$index,$filter,$args...){
         @return nth($list,$index);

@@ -231,15 +231,15 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
     //adjust vertical margin or padding since presence of line-padding
     @if $line-padding>0 and map-has-key-with-unit($abs-parent,width){
       $parent-width:map-get($abs-parent,width);
-      $mg-pd-top:(margin-top:0px,padding-top:0px);
-      $mg-pd-bottom:(margin-bottom:0px,padding-bottom:0px);
-      $mg-pd-top: map-select-pairs-with-unit($abs-child,$mg-pd-top,px,$mg-pd-top);
-      $mg-pd-bottom: map-select-pairs-with-unit($abs-child,$mg-pd-bottom,px,$mg-pd-bottom);
+      $mg-top:(margin-top:0px);
+      $mg-bottom:(margin-bottom:0px);
+      $mg-pd-top: map-select-pairs-with-unit($abs-child,$mg-top,px,$mg-top);
+      $mg-pd-bottom: map-select-pairs-with-unit($abs-child,$mg-bottom,px,$mg-bottom);
       @each $key,$value in $mg-pd-top{
-        #{$key}:rel($value+-($line-padding/2),$parent-width);
+        #{$key}:rel($value+$line-padding/2,$parent-width);
       }
       @each $key,$value in $mg-pd-bottom{
-        #{$key}:rel($value+-($line-padding/2),$parent-width);
+        #{$key}:rel($value+$line-padding/2,$parent-width);
       }
     }
   }

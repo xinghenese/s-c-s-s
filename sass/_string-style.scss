@@ -26,12 +26,12 @@ $_tag-map:(
 }
 
 @function get-string-style($tag:scss){
-  $check:check-string($tag);
+//  $check:check-string($tag);
   $type:map-get($_tag-map,to-lower-case($tag));
   @if $type{
     $style:();
     @each $key,$value in $_style-map {
-      $style:map-merge($style,($key,nth($value,$type)));
+      $style:map-merge($style,($key:nth($value,$type)));
     }
     @return $style;
   }
