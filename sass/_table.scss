@@ -1,0 +1,100 @@
+@import "type-check";
+@import "new-list";
+@import "new-map";
+
+@function table-size($table){
+  $check:check-table($table);
+  @return length($table);
+}
+
+@function table-fields($table){
+  $check:check-table($table);
+  @return map-keys(nth($table,-1));
+}
+
+@function table-unique-id($table){
+  $check:check-table($table);
+  @return nth(map-keys(nth($table,-1)),1);
+}
+
+@function table-default-value($table){
+  $check:check-table($table);
+  @return map-values(nth($table,-1));
+}
+
+@function table-record($table,$n:1){
+  $check:check-table($table) check-number($n);
+  @return nth($table,$n);
+}
+
+@function table-default-record($table){
+  @return table-record($table,-1);
+}
+
+@function table-info($table){
+  $check:check-table($table);
+  @return (
+          fields:table-fields($table),
+          uniqueid:table-unique-id($table),
+          columns:length(map-keys(nth($table,1))),
+          rows:length($table)
+  );
+}
+
+@function create-table($fields){
+  $check:check-multiple-type($fields,'list','map');
+  $record:();
+  @if is-list($fields){
+    @each $item in $fields{
+      @if is-string($item){
+        $record:map-merge($record,($item:0));
+      }
+    }
+  }
+  @else{
+    $record:$fields;
+  }
+  @return append((),$record);
+}
+
+@function table-insert($table,$record){
+  $check:check-table($table) check-multiple-type($record,'list','map');
+  @if is-list($record){
+    $fields:table-fields($table);
+    $length:length($fields);
+    @if length($record)>$length{
+      $record:list-slice($record,1,$length);
+    }
+    $record:list-combine-to-map($fields,$record);
+  }
+  @else{
+    $record:map-match($record,$fields,$fields);
+  }
+  $record:map-merge(table-default-record($table),$record);
+  @return list-insert($table,$record,-2);
+}
+
+@function table-remove($table,$start:-1,$end:0){
+
+}
+
+//list of maps to map of lists
+@function table-transpose($table){
+  $check:check-table($table);
+  $result:();
+  @each $item in $table{
+    @each $key,$value in $item{
+      $values:if(map-has-key($result,$key),map-get($result,$key),());
+      $result:map-merge($result,($key:append($values,$value)));
+    }
+  }
+  @return $result;
+}
+
+@function table-get($table,$row,$column:false){
+
+}
+
+@function table-set($table,$row,$column:false){
+
+}

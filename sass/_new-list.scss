@@ -3,10 +3,12 @@
 @import 'type-check';
 @import 'type-conversion';
 
-@function list-in-bounds($list,$index){
+@function list-in-bounds($list,$index,$ignore-zero:false){
   $check:check-list($list) check-number($index);
-  @if not ($index>0 and length($list)>=$index){
-    @error 'out of bounds of #{$list}';
+  @if $index<=0 or $index>length($list){
+    @if not ($index==0 and $ignore-zero){
+      @error 'out of bounds of (#{$list}) as invalid $index:#{$index}';
+    }
   }
   @return  true;
 }
@@ -66,19 +68,47 @@
   @return if($result!=(),$result,$default);
 }
 
-@function list-slice($list,$start,$end:0){
-  $end:if($end>0,$end,length($list)+$end);
-  $check:check-list($list) check-number($start,$end) list-in-bounds($list,$end);
+@function list-slice($list,$start:1,$end:-1){
+  $start:if($start>=0,$start,length($list)+$start+1);
+  $end:if($end>=0,$end,length($list)+$end+1);
+  $check:check-list($list) check-number($start,$end)
+    list-in-bounds($list,$start,true) list-in-bounds($list,$end,true);
 //  $end:if($end==0,length($list),$end);
   $result:();
-  @for $i from $start through $end{
-    $result:append($result,nth($list,$i));
+  @if $start>0 and $end>0{
+    @for $i from $start through $end{
+      $result:append($result,nth($list,$i));
+    }
   }
   @return $result;
 }
 
-@function list-pop($list){
+@function list-insert($list,$item,$n:-1,$join:false){
+  $check:check-list($list) check-number($n);
+  $first-part:append(list-slice($list,1,if($n>0,$n+-1,$n)),if($n!=0,$item,()));
+  @if $join and is-list($item){
+    $first-part:join(list-slice($list,1,if($n>0,$n+-1,$n)),if($n!=0,$item,()));
+  }
+  $last-part:list-slice($list,if($n>0,$n,$n+1));
+  @return join($first-part,$last-part);
+}
 
+@function list-remove($list,$start:-1,$end:0){
+  $check:check-list($list) check-number($start,$end);
+  $first-part:list-slice($list,1,$start+-1);
+  $last-part:list-slice($list,if($end==0,$start+1,$end+1));
+  @return join($first-part,$last-part);
+}
+
+//useless
+@function list-combine-to-map($list1,$list2){
+  $check:check-list($list1,$list2);
+  $length:min(length($list1),length($list2));
+  $result:();
+  @for $i from 1 through $length{
+    $result:map-merge($result,(nth($list1,$i):nth($list2,$i)));
+  }
+  @return $result;
 }
 
 @function list-test-all($list,$filter,$args...){

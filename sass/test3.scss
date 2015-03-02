@@ -2,6 +2,7 @@
 @import "type-conversion";
 @import "stringify";
 @import "base-fn";
+@import "table";
 
 @mixin test-args($args...){
   $data:keywords($args);
@@ -50,29 +51,89 @@
   @return $margins;
 }
 
-@function slow-sort($list,$ascend:true){
-  $list:to-list($list);
-  $max:max($list);
-  $min:min($list);
+@function list-swap($list,$index1,$index2){
+  $check:check-list($list) check-number($index1,$index2);
+  $temp:nth($list,$index1);
+  $list:set-nth($list,$index1,nth($list,$index2));
+  $list:set-nth($list,$index2,$temp);
+  @return $list;
 }
 
-@function border-modify(){
-  $borders:();
-  $border-direction:'' '-top' '-right' '-left' '-width';
-  $border-property:'' '-width' '-color' '-style';
-  @each $direction in $border-direction{
-    @each $property in $border-property{
-      $borders:append($borders,'border'+$direction+$property);
+@function bubble-sort($list,$ascend:true){
+  $list:to-list($list);
+  $length:length($list);
+  @for $i from 1 through $length+-1{
+//    $test:true;
+    @for $j from 1 through $length+-$i{
+      @if $ascend == (nth($list,$j)>nth($list,$j+1)){
+        $list:list-swap($list,$j,$j+1);
+//        $test:false;
+      }
+    }
+//    @if $test{
+//      @return $list;
+//    }
+  }
+  @return $list;
+}
+
+@function str-find($str,$list){
+  $check:check-string($str) check-list($list);
+  @each $item in $list{
+    @if str-index($str,$item){
+      @return index($list,$item);
     }
   }
-  @return $borders;
+  @return null;
+}
+
+@function border-modify($border-map:null){
+  $border-fields:();
+  $border-direction:'-top' '-right' '-left' '-bottom' '';
+  $border-property:'-width' '-color' '-style' '';
+  @each $direction in $border-direction{
+    @each $property in $border-property{
+      $border-fields:append($border-fields,'border'+$direction+$property);
+    }
+  }
+  $borders:(expand-margins(0),expand-margins(#000000),expand-margins(solid));
+  @if $border-map and check-map($border-map){
+    @each $key,$value in $border-map{
+      $index:index($border-fields,$key);
+      @if $index{
+        $column-index:$index+-4*floor($index/4);//fields
+        $row-index:ceil($index/4);//records
+        @if $column-index>0{
+          @if $row-index>4{
+            $borders:set-nth($borders,$column-index,expand-margins($value));
+          }
+          @else{
+            $column:nth($borders,$column-index);
+            $borders:set-nth($borders,$column-index,set-nth($column,$row-index,$value));
+          }
+        }
+        @else{
+
+        }
+
+      }
+    }
+  }
+  @return $border-fields;
+}
+
+@mixin print-map-pair-index($map){
+  $check:check-map($map);
+  @each $key,$value in $map{
+    map-index-#{index($map,($key $value))}:inspect($key+': '+$value);
+  }
 }
 
 a{
   value21: inspect(str-split('a-b-c-d','-'));
   value3: inspect(_parse-key-name('bo-l-w'));
 
-  value4: check-multiple-type('a',map,STRING,list,number,boolean);
+//  value4: check-multiple-type('a',map,STRING,list,number,boolean);
 
   value5: inspect(map-merge((a:1,b:2,c:3),(b:12,c:13,d:14)));
 
@@ -86,5 +147,56 @@ a{
   value8:inspect(shrink-margins($expander));
 
   value9:inspect(border-modify());
+
+  value10:bubble-sort((5,4,3,2,1));
+
+  value11:list-swap((5,4,3,2,1),1,2);
+
+  value12:index((width:10px,height:20px),(height 20px));
+
+  value13:join((1,2),(2,3));
+
+  value14:str-index('abc','');
+
+  $index:8;
+  value15:$index+-4*floor($index/4);
+
+  value16:map-keys((width:10px,height:20px,))==map-keys((height:30px,width:10px,));
+
+  value17:inspect(list-slice((1,2,3,4,5,6),0));
+
+  value18:inspect(list-insert((1,2,3,4,5,6,7,8),(a,b,c),-1,true));
+
+
+  value19:inspect(list-remove((1,2,3,4,5,6,7,8),6,4));
+
+  $table:create-table((border-width:0,border-color:#000000,border-style:solid,));
+  $table:table-insert($table,(1,#ffffff,none,));
+
+  value20:inspect($table);
+
+  value20-1:inspect(table-transpose($table));
+
+  $t:map-values(table-transpose($table));
+
+  value20-2:inspect($t);
+
+  value20-3:zip($t);
+
+  @function test-args($vars...){
+    @return append($vars,4);
+  }
+
+
+  value-test:args-unzip((1,2,3),4);
+  
+
+
+
+  value21:inspect(list-combine-to-map((a,b,c),(1,2,3,4)));
+
+
+  @include print-map-pair-index(map-merge((width:10px,height:20px,),(width:30px,)));
+
 }
 

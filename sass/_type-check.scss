@@ -1,3 +1,4 @@
+@import "arguments";
 //Type Check
 
 //list of type
@@ -37,6 +38,23 @@ $type-list:number string color bool list map;
 }
 @function is-map($vars...){
   @return _is-type(6, $vars...);
+}
+@function is-table($vars...){
+  @if is-list($vars...){
+    @each $var in $vars{
+      $keys:map-keys(nth($var,1));
+      @each $item in $var{
+        @if not is-map($item){
+          @return false;
+        }
+        @if map-keys($item)!=$keys{
+          @return false;
+        }
+      }
+    }
+    @return true;
+  }
+  @return false;
 }
 
 @function is-empty-list($vars...){
@@ -85,6 +103,14 @@ $type-list:number string color bool list map;
 @function check-map($vars...){
   @return _check-type(6, $vars...);
 }
+@function check-table($vars...){
+  @if not is-table($vars...){
+    @each $var in $vars{
+      @error 'Invalid type of #{inspect($var)}. Parameters of table type required.';
+    }
+  }
+  @return true;
+}
 
 @function check-function-exist($functions...){
   $check:true;
@@ -129,6 +155,7 @@ $type-list:number string color bool list map;
 //check multiple type
 @function check-multiple-type($var,$types...){
   $check:false;
+  $types:args-unzip($types);
   @each $type in $types{
     @if check-string($type) and index($type-list,to-lower-case($type)) and
     call('is-#{to-lower-case($type)}',$var){
