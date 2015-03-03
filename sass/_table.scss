@@ -1,29 +1,35 @@
 @import "type-check";
+@import "constants";
 @import "new-list";
 @import "new-map";
 
 @function table-size($table){
-  $check:check-table($table);
-  @return length($table);
+//  $check:check-table($table);
+  @return map-get(map-get($table,'info'),'size');
 }
 
 @function table-fields($table){
-  $check:check-table($table);
-  @return map-keys(nth($table,-1));
+//  $check:check-table($table);
+  @return map-get(map-get($table,'info'),'fields');
+}
+
+@function table-fields-types($table){
+  //  $check:check-table($table);
+  @return map-get(map-get($table,'info'),'fields-types');
 }
 
 @function table-unique-id($table){
-  $check:check-table($table);
+//  $check:check-table($table);
   @return nth(map-keys(nth($table,-1)),1);
 }
 
 @function table-default-value($table){
-  $check:check-table($table);
-  @return map-values(nth($table,-1));
+//  $check:check-table($table);
+  @return map-get(map-get($table,'info'),'fields-defaults');
 }
 
 @function table-record($table,$n:1){
-  $check:check-table($table) check-number($n);
+//  $check:check-table($table) check-number($n);
   @return nth($table,$n);
 }
 
@@ -32,46 +38,75 @@
 }
 
 @function table-info($table){
-  $check:check-table($table);
+//  $check:check-table($table);
+//  @return (
+//          fields:table-fields($table),
+//          uniqueid:table-unique-id($table),
+//          columns:length(map-keys(nth($table,1))),
+//          rows:length($table)
+//  );
+  @return map-get($table,'info');
+}
+
+@function table-content($table){
+  @return map-get($table,'content');
+}
+
+@function table-print($table){
+//  $check:check-table($table);
+  @return inspect(map-get($table,'content'));
+}
+
+@function create-table($fields,$unique-id:null,$types:(),$defaults:()){
+  $check:check-multiple-type($fields,'list','map');
+
+  $types:to-list($types);
+  $defaults:to-list($defaults);
+  $length:length($fields);
+  //modify $defaults
+  $defaults:list-resize($defaults,$length,if(is-list($fields),'',map-values($fields)),true);
+  //modify $types
+  $types:list-resize($types,$length,list-types($defaults),true);
+  $fields:to-list($fields);
+  $unique-id:if($unique-id and index($fields,$unique-id),$unique-id,nth($fields,1));
+
+  @for $i from 1 through $length{
+    @if not index($type-list,nth($types,$i)){
+      $types:set-nth($types,$i,'string');
+    }
+    $defaults:set-nth($defaults,$i,call('to-'+nth($types,$i),nth($defaults,$i)));
+  }
+
   @return (
-          fields:table-fields($table),
-          uniqueid:table-unique-id($table),
-          columns:length(map-keys(nth($table,1))),
-          rows:length($table)
+          info:(
+                  fields:$fields,
+                  fields-types:$types,
+                  fields-defaults:$defaults,
+                  fields-length:$length,
+                  unique-id:quote($unique-id),
+                  size:0,
+          ),
+          content:(),
   );
 }
 
-@function create-table($fields){
-  $check:check-multiple-type($fields,'list','map');
-  $record:();
-  @if is-list($fields){
-    @each $item in $fields{
-      @if is-string($item){
-        $record:map-merge($record,($item:0));
-      }
-    }
-  }
-  @else{
-    $record:$fields;
-  }
-  @return append((),$record);
-}
-
 @function table-insert($table,$record){
-  $check:check-table($table) check-multiple-type($record,'list','map');
+//  $check:check-table($table) check-multiple-type($record,'list','map');
+  $check:check-multiple-type($record,'list','map');
   @if is-list($record){
     $fields:table-fields($table);
     $length:length($fields);
-    @if length($record)>$length{
-      $record:list-slice($record,1,$length);
-    }
+    $record:list-resize($record,$length,table-default-value($table));
+//    @if length($record)>$length{
+//      $record:list-slice($record,1,$length);
+//    }
     $record:list-combine-to-map($fields,$record);
   }
   @else{
     $record:map-match($record,$fields,$fields);
   }
-  $record:map-merge(table-default-record($table),$record);
-  @return list-insert($table,$record,-2);
+//  $record:map-merge(table-default-record($table),$record);
+  @return list-insert(table-content($table),$record,-1);
 }
 
 @function table-remove($table,$start:-1,$end:0){

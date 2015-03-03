@@ -1,3 +1,4 @@
+@import "constants";
 @import "arguments";
 //Type Check
 
@@ -40,15 +41,21 @@ $type-list:number string color bool list map;
   @return _is-type(6, $vars...);
 }
 @function is-table($vars...){
-  @if is-list($vars...){
+  @if is-map($vars...){
     @each $var in $vars{
-      $keys:map-keys(nth($var,1));
-      @each $item in $var{
-        @if not is-map($item){
-          @return false;
-        }
-        @if map-keys($item)!=$keys{
-          @return false;
+      $info:map-get($var,'info');
+      $content:map-get($var,'content');
+      @if is-map($info) and is-list($content){
+        $keys:map-get($info,'fields');
+        @if length($content)>0{
+          @each $item in $content{
+            @if not is-map($item){
+              @return false;
+            }
+            @if map-keys($item)!=$keys{
+              @return false;
+            }
+          }
         }
       }
     }
@@ -155,7 +162,7 @@ $type-list:number string color bool list map;
 //check multiple type
 @function check-multiple-type($var,$types...){
   $check:false;
-  $types:args-unzip($types);
+  $types:args-unzip($types...);
   @each $type in $types{
     @if check-string($type) and index($type-list,to-lower-case($type)) and
     call('is-#{to-lower-case($type)}',$var){
@@ -168,7 +175,26 @@ $type-list:number string color bool list map;
   @return true;
 }
 
-
+//@function is-amid($var,$interval,$interval-type:1,$lower:$NEGATIVE_INFINITY,$higher:$POSITIVE_INFINITY){
+//  $check:check-number($var);
+//  $interval:if(is-list($interval),$interval,append((),$interval));
+//  $lower:nth($)
+//  $min:min($lower,$higher);
+//  $max:max($lower,$higher);
+//  @if $var>=$min and $var<=$max{
+//    @if $interval-type==$OPEN_INTERVAL and $var==$min or $var==$max{
+//      @return false;
+//    }
+//    @if $interval-type==$LEFT_OPEN_INTERVAL and $var==$min{
+//      @return false;
+//    }
+//    @if $interval-type==$LEFT_CLOSE_INTERVAL and $var==$max{
+//      @return false;
+//    }
+//    @return true;
+//  }
+//  @return false;
+//}
 
 //determine if the variables is a number with given unit
 @function has-unit($var,$unit:px){

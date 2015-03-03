@@ -86,6 +86,9 @@
 @function _map-get-pair($map,$key){
   @return (#{$key}:map-get($map,$key));
 }
+@function _map-value-types($map,$key){
+  @return type-of(map-get($map,$key));
+}
 
 ///
 @function map-has-numeric-key($map,$key-list,$greed:false){
@@ -112,3 +115,13 @@
 @function map-select-pairs-with-unit($map,$key-list,$unit:px,$default:null){
   @return map-match($map,$key-list,$default,_map-has-unit,_map-get-pair,true);
 }
+
+@function map-process($map,$process:map-get,$args...){
+  @return map-match($map,$map,$map,map-has-key,$process,true,$args...);
+}
+
+@function map-types($map){
+  @return map-process($map,_map-value-types);
+}
+
+

@@ -2,15 +2,16 @@
 
 @import 'type-check';
 @import 'type-conversion';
+@import "math";
 
 @function list-in-bounds($list,$index,$ignore-zero:false){
   $check:check-list($list) check-number($index);
   @if $index<=0 or $index>length($list){
     @if not ($index==0 and $ignore-zero){
-      @error 'out of bounds of (#{$list}) as invalid $index:#{$index}';
+      @error 'out of bounds of (#{inspect($list)}) as invalid $index:#{$index}';
     }
   }
-  @return  true;
+  @return true;
 }
 
 @function list-test($list,$item-list,$filter:index,$greed:false,$args...){
@@ -100,6 +101,26 @@
   @return join($first-part,$last-part);
 }
 
+@function list-resize($list,$size:-1,$default:null,$list-unzip:false){
+  $check:check-list($list) check-number($size);
+  $length:length($list);
+  $size:if($size<0,$length,$size);
+  @if $size>$length{
+    @if $list-unzip and is-list($default){
+      $list:join($list,list-slice($default,length($list)+1,$size))
+    }
+    @else{
+      @for $i from $length+1 through $size{
+        $list:append($list,$default or nth($list,mod-none-zero($i,$length)));
+      }
+    }
+  }
+  @else{
+    $list:list-slice($list,1,$size);
+  }
+  @return $list;
+}
+
 //useless
 @function list-combine-to-map($list1,$list2){
   $check:check-list($list1,$list2);
@@ -135,5 +156,19 @@
   @return list-match($list,(),$default,$filter,_list-get,true,$args...);
 }
 @function list-select-item-with-unit($list,$unit:px,$default:null){
-  @return list-filter-items($list,$default,_list-item-has-unit,$unit)
+  @return list-filter-items($list,$default,_list-item-has-unit,$unit);
 }
+
+@function _list-item-types($list,$item){
+  @return type-of($item);
+}
+
+@function list-process($list,$process:_list-get,$args...){
+  @return list-match($list,(),null,index,$process,true,$args...);
+}
+
+@function list-types($list){
+  @return list-process($list,_list-item-types);
+}
+
+

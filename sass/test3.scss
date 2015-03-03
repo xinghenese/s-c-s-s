@@ -3,6 +3,7 @@
 @import "stringify";
 @import "base-fn";
 @import "table";
+@import "math";
 
 @mixin test-args($args...){
   $data:keywords($args);
@@ -101,7 +102,7 @@
     @each $key,$value in $border-map{
       $index:index($border-fields,$key);
       @if $index{
-        $column-index:$index+-4*floor($index/4);//fields
+        $column-index:mod($index,4);//fields
         $row-index:ceil($index/4);//records
         @if $column-index>0{
           @if $row-index>4{
@@ -129,11 +130,18 @@
   }
 }
 
+@function args($args...){
+  @return (type:type-of($args),value:$args);
+}
+
 a{
   value21: inspect(str-split('a-b-c-d','-'));
   value3: inspect(_parse-key-name('bo-l-w'));
 
-//  value4: check-multiple-type('a',map,STRING,list,number,boolean);
+  value4: check-multiple-type('a',map,(STRING,list,number,boolean));
+
+  value4-1:inspect(args(map,(STRING,list,number,boolean)));
+
 
   value5: inspect(map-merge((a:1,b:2,c:3),(b:12,c:13,d:14)));
 
@@ -171,29 +179,60 @@ a{
   value19:inspect(list-remove((1,2,3,4,5,6,7,8),6,4));
 
   $table:create-table((border-width:0,border-color:#000000,border-style:solid,));
+
+//  $table:create-table((border-width border-color border-style),'width',('number' 'color'));
+
   $table:table-insert($table,(1,#ffffff,none,));
 
   value20:inspect($table);
 
-  value20-1:inspect(table-transpose($table));
+  table-info:inspect(table-info($table));
 
-  $t:map-values(table-transpose($table));
+  table-fields:inspect(table-fields($table));
 
-  value20-2:inspect($t);
+  table-fields-types:inspect(table-fields-types($table));
 
-  value20-3:zip($t);
+  table-defaults:inspect(table-default-value($table));
+
+//  value20-1:inspect(table-transpose($table));
+
+//  $t:map-values(table-transpose($table));
+
+//  value20-2:inspect($t);
+
+//  value20-3:zip($t);
 
   @function test-args($vars...){
     @return append($vars,4);
   }
+  @function test-if($a){
+    $r:'r';
+    @if $a>0{
+      $r:'y';
+    }
+    @elseif $a>-10{
+      $r:'n';
+    }
+    @return $r;
+  }
+
+
+  value25:test-if(-1);
 
 
   value-test:args-unzip((1,2,3),4);
-  
-
 
 
   value21:inspect(list-combine-to-map((a,b,c),(1,2,3,4)));
+
+  value22:inspect((list-resize((1,2,3,4),9,a)));
+
+  value24:to-number('-13');
+
+  value26:map-types((border-width:0,border-color:#000000,border-style:solid,));
+
+//  value23:length(());
+
 
 
   @include print-map-pair-index(map-merge((width:10px,height:20px,),(width:30px,)));
