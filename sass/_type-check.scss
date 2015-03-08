@@ -43,20 +43,23 @@ $type-list:number string color bool list map;
 @function is-table($vars...){
   @if is-map($vars...){
     @each $var in $vars{
-      $info:map-get($var,'info');
-      $content:map-get($var,'content');
-      @if is-map($info) and is-list($content){
-        $keys:map-get($info,'fields');
-        @if length($content)>0{
-          @each $item in $content{
-            @if not is-map($item){
-              @return false;
-            }
-            @if map-keys($item)!=$keys{
-              @return false;
-            }
-          }
-        }
+      @if not is-list(map-get($var,'content')){
+        @return false;
+      }
+      @if not is-map(map-get($var,'transpose-content')) and map-get($var,'transpose-content')!=(){
+        @return false;
+      }
+      @if not is-number(map-get($var,'size')){
+        @return false;
+      }
+      @if map-get($var,'state')!='normal' and map-get($var,'state')!='transpose'{
+        @return false;
+      }
+      @if not is-boolean(map-get($var,'modified')){
+        @return false;
+      }
+      @if not is-map(map-get($var,'info')){
+        @return false;
       }
     }
     @return true;

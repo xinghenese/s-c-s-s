@@ -72,18 +72,35 @@ $_tag-map:(
 
 @function str-split($str,$separator:' '){
   $check: check-string($str) check-string($separator);
-  $separator-length:length($separator);
+  $separator-length:str-length($separator);
+  $is-empty-separator:$separator-length==0;
+
   $result:();
-  @while str-index($str,$separator){
+  @while str-length($str)>0 and str-index($str,$separator){
     $separator-index:str-index($str,$separator);
-    $item:str-slice($str,1,$separator-index+-1);
-    @if $item{
-      $result:append($result,$item);
+    $separator-index:if($is-empty-separator,2,$separator-index);
+    @if $separator-index>1{
+      $item:str-slice($str,1,$separator-index+-1);
+      @if $item{
+        $result:append($result,$item);
+      }
     }
     $str:str-slice($str,$separator-index+$separator-length);
   }
   @if $str{
     $result:append($result,$str);
+  }
+  @return $result;
+}
+
+@function str-replace($str,$find,$replace,$greed:true){
+  $check:check-string($str,$find,$replace) check-boolean($greed);
+  $str:str-split($str,$find);
+  $result:nth($str,1);
+  @if length($str)>1{
+    @for $i from 2 through length($str){
+      $result:$result+if($greed or $i==2,$replace,$find)+nth($str,$i);
+    }
   }
   @return $result;
 }

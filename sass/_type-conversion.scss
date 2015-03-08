@@ -91,7 +91,7 @@
 }
 
 @function to-string($var){
-  @return inspect($var);
+  @return if(is-string($var),$var,inspect($var));
 }
 
 @function to-list($var,$warn:false){

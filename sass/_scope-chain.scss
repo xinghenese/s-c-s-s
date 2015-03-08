@@ -2,23 +2,29 @@
 
 @import "type-check";
 @import "type-conversion";
+@import "constants";
 @import "stringify";
 @import "new-list";
 @import "new-map";
-@import "base-fn";
+//@import "base-fn";
+@import "layout-base";
 
-$global-width:640px !default;
-$global-font:32px !default;
-$global:(
-        width:$global-width,
-        font-size:$global-font,
-) !default;
+
+@function init-global-layout($layout){
+  $check:check-map($layout);
+  @if not $global-used{
+    $layout:map-select-pairs-with-unit($layout,$global,'px',$global);
+    $global:map-merge($global,$layout) !global;
+  }
+  @return true;
+}
 
 $layout-mixin-list: 'relative' 'relative-layout' 'relative-content-box' 'relative-box' 'shape-box';
 
 @function create-scopes-if-not-exists(){
   @if not global-variable-exists(scope-chain){
     $scope-chain:(global:$global) !global;
+    $global-used:true !global;
   }
   @return true;
 }
@@ -44,9 +50,9 @@ $layout-mixin-list: 'relative' 'relative-layout' 'relative-content-box' 'relativ
   @return map-get($scope-chain,global);
 }
 
-@function relative($self-layout){
-  $check: check-map($self-layout) check-local-scope();
-}
+//@function relative($self-layout){
+//  $check: check-map($self-layout) check-local-scope();
+//}
 
 @mixin layout($layout-mixin,$self-layout){
   $check: check-string($layout-mixin) check-map($self-layout) check-local-scope();
@@ -58,7 +64,7 @@ $layout-mixin-list: 'relative' 'relative-layout' 'relative-content-box' 'relativ
       $ancestor:get-ancestor($selector);
       @warn '$ancestor: #{to-string($ancestor)}';
 
-      $self-layout:map-merge($self-layout,$ancestor);
+      $self-layout:map-merge($ancestor,$self-layout);
 
       @if $layout-mixin=='relative-layout'{
         @include relative-layout($self-layout,$ancestor);
@@ -72,6 +78,12 @@ $layout-mixin-list: 'relative' 'relative-layout' 'relative-content-box' 'relativ
       @else if $layout-mixin=='shape-box'{
         @include shape-box($self-layout,$ancestor);
       }
+
+      //test-block
+      @warn '$self-layout: #{to-string($self-layout)}';
+      @warn '$ancestor: #{to-string($ancestor)}';
+      //
+
 
       //filter $self-layout into a new map $self with keys:(width,font)
       $self:map-select-pairs-with-unit($self-layout,$ancestor,'px',$ancestor);

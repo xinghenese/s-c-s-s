@@ -4,26 +4,26 @@
 @import "layout-base";
 @import "scope-chain";
 
-@mixin relative($self-layout){
-  @include layout('relative',$self-layout);
-}
+//@mixin t-relative($self-layout){
+//  @include layout('relative',$self-layout);
+//}
+//
+//@mixin t-rel($self-layout){
+//  @include relative($self-layout);
+//}
 
-@mixin rel($self-layout){
-  @include relative($self-layout);
-}
-
-@mixin relative-layout($self-layout){
+@mixin t-relative-layout($self-layout){
   @include layout('relative-layout',$self-layout);
 }
 
-@mixin relative-box($self-layout){
+@mixin t-relative-box($self-layout){
   @include layout('relative-box',$self-layout);
 }
 
-@mixin relative-content-box($self-layout){
+@mixin t-relative-content-box($self-layout){
   @include layout('relative-content-box',$self-layout);
 }
 
-@mixin shape-box($self-layout){
+@mixin t-shape-box($self-layout){
   @include layout('shape-box',$self-layout);
 }

@@ -112,6 +112,10 @@
   @return map-match($map,$key-list,$default,_map-has-unit,_map-get-pair,false);
 }
 
+@function map-select-pairs($map,$key-list,$default:null){
+  @return map-match($map,$key-list,$default or $key-list,map-has-key,_map-get-pair,true);
+}
+
 @function map-select-pairs-with-unit($map,$key-list,$unit:px,$default:null){
   @return map-match($map,$key-list,$default,_map-has-unit,_map-get-pair,true);
 }
