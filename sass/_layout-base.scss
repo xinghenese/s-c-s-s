@@ -308,26 +308,31 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
   $check:check-local-scope() check-map($abs-child,$abs-parent) check-number($layout-type);
   $result-layout: css(_parse-map($abs-child));
 
-  //set layout of container
+//set layout of container
   $width:map-get($result-layout,'width');
   $height:map-get($result-layout,'height');
-  $result-width:$width or map-get($abs-parent,'width') or 0px;
+  //width not height inherits from parent as default.
+  $result-width:absolute($width,map-get($abs-parent,'width')) or $width or map-get($abs-parent,'width') or 0px;
   $result-height:absolute($height,map-get($abs-parent,'height')) or $height or 0px;
+  //deal with the real size of the content zone respectively in the case of padding-box, border-box and margin-box.
   $element-list:'padding' 'border-width' 'margin';
   @each $item in $element-list{
     @if $layout-type>=index($element-list,$item){
-      $element:expand-margins(map-get($result-layout,$item) or 0px);
-      $result-width:$result-width - nth($element,2) - nth($element,4);
-      $result-height:$result-height - nth($element,1) - nth($element,3);
+      $item:expand-margins(map-get($result-layout,$item) or 0px);
+      $result-width:$result-width - nth($item,2) - nth($item,4);
+      $result-height:$result-height - nth($item,1) - nth($item,3);
     }
   }
   $result-width:if($result-width>0,$result-width,$width);
   $result-height:if($result-height>0,$result-height,$height);
-  $width-pair:if($result-width,(width:$result-width),());
-  $height-pair:if($result-height,(height:$result-height),());
-  $result-layout:map-merge(map-merge($result-layout,$width-pair),$height-pair);
+  @if $result-width{
+    $result-layout:map-merge($result-layout,(width:$result-width));
+  }
+  @if $result-height{
+    $result-layout:map-merge($result-layout,(height:$result-height));
+  }
 
-  //set style of content
+//set style of content
   $font-size:map-get($result-layout,'font-size') or map-get($abs-parent,'font-size');
   $line-padding:map-get($result-layout,'line-padding') or 0px;
   $line-height:map-get($result-layout,'line-height') or $font-size+$line-padding;
@@ -342,6 +347,10 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
               text-overflow: 'ellipsis',
               white-space: 'nowrap',
       ));
+      @if $result-height{
+        $result-layout:map-merge($result-layout,(line-height:$result-height));
+        $result-layout:map-remove($result-layout,'height');
+      }
     }
     @else{
       $result-layout:map-merge($result-layout,(
