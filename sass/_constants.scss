@@ -68,9 +68,11 @@ $CSS_DEFAULTS:(
 $RELATIVE_THRESHOLD:10%;
 
 $global-width:640px !default;
+$global-height:0px !default;
 $global-font:32px !default;
 $global:(
         width:$global-width,
+        height:$global-height,
         font-size:$global-font,
 ) !default;
 $global-used:false;

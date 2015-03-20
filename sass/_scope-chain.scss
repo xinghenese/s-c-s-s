@@ -47,7 +47,7 @@ $layout-mixin-list: 'relative' 'relative-layout' 'relative-content-box' 'relativ
       }
     }
   }
-  @return map-get($scope-chain,global);
+  @return map-get($scope-chain,'global');
 }
 
 //@function relative($self-layout){
@@ -80,7 +80,7 @@ $layout-mixin-list: 'relative' 'relative-layout' 'relative-content-box' 'relativ
       }
 
       @else if $layout-mixin=='relative-layout'{
-        @include relative-layout($self-layout,$ancestor);
+        @include relative-content-box($self-layout,$ancestor);
       }
       @else if $layout-mixin=='relative-box'{
         @include relative-box($self-layout,$ancestor);

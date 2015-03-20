@@ -132,7 +132,7 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
               if($unit==100%,map-get($base,'width'),null));
     }
   }
-  @if is-number($base, $unit){
+  @if is-number($base, $unit) and $base>0{
     @if is-number($raw) and comparable($raw, $base){
       $result: if($raw!=0,$raw/$base*$unit,0);
     }
@@ -155,10 +155,13 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
   @return relative($raw, $base, $unit, $is-tolerant:false);
 }
 
-@function relative-base($abs-child,$abs-parent){
+@function relative-base($abs-child,$abs-parent,$pre-process:true){
   $check:check-map($abs-child,$abs-parent);
+  $abs-child:if($pre-process,_parse-map($abs-child),$abs-child);
+  $abs-parent:if($pre-process,_parse-map($abs-parent),$abs-parent);
   @return (
           width:map-get($abs-parent,'width') or $global-width,
+          height:map-get($abs-parent,'height') or 0px,
           font-size:map-get($abs-child,'font-size') or map-get($abs-parent,'font-size') or $global-font,
   );
 }
@@ -303,14 +306,15 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
   @return map-merge($result,$properties);
 }
 
-@function layout-box($abs-child,$abs-parent,$layout-type:0){
+@function container-layout($abs-child,$abs-parent,$layout-type:0,$pre-process:true){
   //check whether runs in local scope and check whether parameters: $abs-child, $abs-parent are in valid type.
   $check:check-local-scope() check-map($abs-child,$abs-parent) check-number($layout-type);
-  $result-layout: css(_parse-map($abs-child));
+  $abs-parent:if($pre-process,_parse-map($abs-parent),$abs-parent);
+  $result-layout: if($pre-process,css(_parse-map($abs-child)),$abs-child);
 
-//set layout of container
-  $width:map-get($result-layout,'width');
-  $height:map-get($result-layout,'height');
+  //set layout of container
+  $width:map-get($result-layout,'width') or map-get($abs-parent,'width');
+  $height:map-get($result-layout,'height') or 0;
   //width not height inherits from parent as default.
   $result-width:absolute($width,map-get($abs-parent,'width')) or $width or map-get($abs-parent,'width') or 0px;
   $result-height:absolute($height,map-get($abs-parent,'height')) or $height or 0px;
@@ -332,50 +336,19 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
     $result-layout:map-merge($result-layout,(height:$result-height));
   }
 
-//set style of content
+  @return $result-layout;
+}
+
+@function content-layout($abs-child,$abs-parent,$pre-process:true){
+  //check whether runs in local scope and check whether parameters: $abs-child, $abs-parent are in valid type.
+  $check:check-local-scope() check-map($abs-child,$abs-parent);
+  $abs-parent:if($pre-process,_parse-map($abs-parent),$abs-parent);
+  $result-layout: if($pre-process,css(_parse-map($abs-child)),$abs-child);
+
+  //set style of content
   $font-size:map-get($result-layout,'font-size') or map-get($abs-parent,'font-size');
   $line-padding:map-get($result-layout,'line-padding') or 0px;
   $line-height:map-get($result-layout,'line-height') or $font-size+$line-padding;
-  //set line-height
-  $result-layout:map-merge($result-layout,(line-height:$line-height));
-  //set max-height and text-ellipsis
-  $line-count:map-get($result-layout,'line-count') or 0;
-  @if $line-count>0{
-    @if $line-count==1{
-      $result-layout:map-merge($result-layout,(
-              overflow: 'hidden',
-              text-overflow: 'ellipsis',
-              white-space: 'nowrap',
-      ));
-      @if $result-height{
-        $result-layout:map-merge($result-layout,(line-height:$result-height));
-        $result-layout:map-remove($result-layout,'height');
-      }
-    }
-    @else{
-      $result-layout:map-merge($result-layout,(
-              max-height:map-get($line-count,'line-count')*$line-height,
-              overflow: 'hidden',
-      ));
-    }
-  }
-  //set min-width;
-  @if map-has-key($result-layout,'letter-count'){
-    $letter-count:map-get($result-layout,'letter-count') or 0;
-    @if $letter-count>0 and unitless($letter-count){
-      $result-layout:map-merge($result-layout,(min-width: $letter-count*$font-size));
-    }
-    @else if is-list($letter-count){
-      $count-1:list-select-item-with-unit-by-index($letter-count,1);
-      $count-2:list-select-item-with-unit-by-index($letter-count,2);
-      @if $count-1{
-        $result-layout:map-merge($result-layout,(min-width: $count-1*$font-size));
-      }
-      @if $count-2{
-        $result-layout:map-merge($result-layout,(max-width: $count-2*$font-size));
-      }
-    }
-  }
   //adjust vertical margin or padding since presence of line-padding
   @if $line-padding>0{
     $margins:expand-margins(map-get($result-layout,'margin') or 0px);
@@ -384,37 +357,112 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
     }
     $result-layout:map-merge($result-layout,(margin:shrink-margins($margins)));
   }
-  
+  //set line-height
+  $result-layout:map-merge($result-layout,(line-height:$line-height));
+  //set max-height and text-ellipsis
+  @if map-has-key($result-layout,'line-count'){
+    $line-count:map-get($result-layout,'line-count') or 0;
+    $line-count:list-resize(to-list($line-count),2,0);
+    $remove-height:false;
+    @if nth($line-count,1)==1 and nth($line-count,2)==1{
+      $result-layout:map-merge($result-layout,(
+              overflow: 'hidden',
+              text-overflow: 'ellipsis',
+              white-space: 'nowrap',
+      ));
+      $remove-height:true;
+    }
+    @else{
+      $height-types:'min-height' 'max-height';
+      @each $item in $height-types{
+        $count:nth($line-count,index($height-types,$item));
+        @if $count and $count>0 and unitless($count){
+          $result-layout:map-merge($result-layout,($item: $count*$line-height,overflow:'hidden',));
+          $remove-height:true;
+        }
+      }
+    }
+    @if map-has-key($result-layout,'min-height') and map-get($result-layout,'min-height')==map-get($result-layout,'max-height'){
+      $result-layout:map-merge($result-layout,(height:map-get($result-layout,'min-height')));
+      $result-layout:map-remove(map-remove($result-layout,'min-height'),'max-height');
+      $remove-height:false;
+    }
+    @if $remove-height and map-has-key($result-layout,'height'){
+      $result-layout:map-remove($result-layout,'height');
+    }
+  }
+  //set min-width and max-width;
+  @if map-has-key($result-layout,'letter-count'){
+    $letter-count:map-get($result-layout,'letter-count') or 0;
+    $letter-count:list-resize(to-list($letter-count),2,0);
+    $letter-spacing:map-get($result-layout,'letter-spacing') or 0px;
+    $font-width:if(
+                    is-number($letter-spacing) and unit($letter-spacing)=='px',
+                    $font-size+$letter-spacing,
+                    $font-size
+    );
+    $width-types:'min-width' 'max-width';
+    @each $item in $width-types{
+      $count:nth($letter-count,index($width-types,$item));
+      @if $count and $count>0 and unitless($count){
+        $result-layout:map-merge($result-layout,($item: $count*$font-width));
+      }
+    }
+    @if map-has-key($result-layout,'min-width') and map-get($result-layout,'min-width')==map-get($result-layout,'max-width'){
+      $result-layout:map-merge($result-layout,(width:map-get($result-layout,'min-width')));
+      $result-layout:map-remove(map-remove($result-layout,'min-width'),'max-width');
+    }
+  }
+
   @return $result-layout;
+}
+
+@function layout-box($abs-child,$abs-parent,$layout-type:0){
+  @return content-layout(container-layout($abs-child,$abs-parent,$layout-type),$abs-parent,false);
 }
 
 @function content-box($abs-child,$abs-parent){
   @return layout-box($abs-child,$abs-parent);
 }
 
+@mixin content-box($abs-child,$abs-parent){
+  @include print-css(content-box($abs-child,$abs-parent));
+}
+
 @function padding-box($abs-child,$abs-parent){
   @return layout-box($abs-child,$abs-parent,1);
+}
+
+@mixin padding-box($abs-child,$abs-parent){
+  @include print-css(padding-box($abs-child,$abs-parent));
 }
 
 @function border-box($abs-child,$abs-parent){
   @return layout-box($abs-child,$abs-parent,2);
 }
 
+@mixin border-box($abs-child,$abs-parent){
+  @include print-css(border-box($abs-child,$abs-parent));
+}
+
 @function margin-box($abs-child,$abs-parent){
   @return layout-box($abs-child,$abs-parent,3);
+}
+
+@mixin margin-box($abs-child,$abs-parent){
+  @include print-css(margin-box($abs-child,$abs-parent));
 }
 
 //calculate the relative layout
 //@param
 //  $abs-child: a map with keys which stands for some properties of l
-@function relative-layout($abs-child,$abs-parent){
+@function relative-layout-box($abs-child,$abs-parent,$layout-type:0){
   //check whether runs in local scope and check whether parameters: $abs-child, $abs-parent are in valid type.
   $check:check-local-scope() check-map($abs-child,$abs-parent);
-  $abs-child:_parse-map($abs-child);
-  $relative-base:relative-base($abs-child,_parse-map($abs-parent));
+  $relative-base:relative-base($abs-child,$abs-parent);
   //set relative layout property.
   //all these relative layout property is percentage of absolute property to width of parent element.
-  $result-layout:css($abs-child);
+  $result-layout:layout-box($abs-child,$abs-parent,$layout-type);
   @warn '#{inspect(&)}css: #{inspect($result-layout)}';
 
   @each $key,$value in $result-layout{
@@ -423,10 +471,10 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
       $value:smart-relative($value,$relative-base);
       @warn '#{inspect(&)}-related-to-width: #{inspect(($key,$value))}';
     }
-//    @else if index($LAYOUT_RELATED_TO_HEIGHT_LIST,$key){
-//      $value:smart-relative($value,$relative-base);
-//      @warn '#{inspect(&)}-related-to-height: #{inspect(($key,$value))}';
-//    }
+    @else if index($LAYOUT_RELATED_TO_HEIGHT_LIST,$key) and map-get($relative-base,'height')>0{
+      $value:smart-relative($value,map-get($relative-base,'height'));
+      @warn '#{inspect(&)}-related-to-height: #{inspect(($key,$value))}';
+    }
     @else if index($LAYOUT_RELATED_TO_FONT_LIST,$key){
       $value:smart-relative($value,$relative-base,1em);
       @warn '#{inspect(&)}-related-to-font-size: #{inspect(($key,$value))}';
@@ -439,111 +487,36 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
   @return $result-layout;
 }
 
-@mixin relative-layout($abs-child,$abs-parent){
-  @warn 'mixin-relative-layout: #{inspect($abs-child)}';
-  @include print-css(relative-layout($abs-child,$abs-parent));
-}
-
-@function relative-box($abs-child,$abs-parent){
-  //check whether runs in local scope and check whether parameters: $abs-child, $abs-parent are in valid type.
-  $check:check-local-scope() check-map($abs-child,$abs-parent);
-  //set relative layout property.
-  //all these relative layout property is percentage of absolute property to width of parent element
-  $result-layout: relative-layout($abs-child,$abs-parent);
-  //set relative height
-  @if map-has-key-with-unit($abs-parent,'height') and map-has-key-with-unit($abs-child,'height'){
-    $height:rel(map-get($abs-child,'height'),map-get($abs-parent,'height'));
-    $result-layout:map-merge($result-layout,(height:$height));
-  }
-  @return $result-layout;
-}
-
-@mixin relative-box($abs-child,$abs-parent){
-  @include print-css(relative-box($abs-child,$abs-parent));
-}
-
 @function relative-content-box($abs-child,$abs-parent){
-  //check whether runs in local scope and check whether parameters: $abs-child, $abs-parent are in valid type.
-  $check:check-local-scope() check-map($abs-child,$abs-parent);
-  //set relative layout property.
-  //all these relative layout property is percentage of absolute property to width of parent element
-  $result-layout: relative-layout($abs-child,$abs-parent);
-  $relative-base: relative-base($abs-child,$abs-parent);
-  //set line-height;
-  @warn 'abs-parent; #{inspect($abs-parent)}';
-
-  $font-size:map-get($relative-base,'font-size');
-  $line-padding:map-get($result-layout,'line-padding') or 0px;
-  $line-height:map-get($result-layout,'line-height') or $font-size+$line-padding;
-  //set font-size
-  $result-layout:map-merge($result-layout,(
-          font-size:rel($font-size,map-get($abs-parent,'font-size'),1em) or 1em,
-  ));
-  //set line-height
-  $result-layout:map-merge($result-layout,(line-height:rel($line-height,$relative-base,1em)));
-  //set max-height and text-ellipsis
-  $line-count:map-get($result-layout,'line-count') or 0;
-  @if $line-count>0{
-    @if $line-count==1{
-      $result-layout:map-merge($result-layout,(
-              overflow: 'hidden',
-              text-overflow: 'ellipsis',
-              white-space: 'nowrap',
-      ));
-    }
-    @else{
-      $result-layout:map-merge($result-layout,(
-              max-height:rel(map-get($line-count,'line-count')*$line-height,$relative-base,1em),
-              overflow: 'hidden',
-      ));
-    }
-  }
-  //set word-spacing, letter-spacing, border-width, border-radius related to font-size;
-  //set border(like 0.5em solid #ffffff) related to font-size ;
-  @each $item in 'border' 'border-width' 'border-radius' 'word-spacing' 'letter-spacing'{
-    @if map-has-key($result-layout,$item){
-      $result-layout:map-merge($result-layout,(
-              $item:rel(map-get($result-layout,$item),$relative-base,1em,true),
-      ));
-    }
-  }
-  //set min-width;
-  @if map-has-key($result-layout,'letter-count'){
-    $letter-count:map-get($result-layout,'letter-count');
-    @if has-unit($letter-count,''){
-      $result-layout:map-merge($result-layout,(min-width: $letter-count * 1em));
-    }
-    @else if is-list($letter-count){
-      $counts:list-select-item-with-unit($letter-count,'');
-      $count-1:list-select-item-with-unit-by-index($letter-count,1);
-      $count-2:list-select-item-with-unit-by-index($letter-count,2);
-      @if $count-1{
-        $result-layout:map-merge($result-layout,(min-width: $count-1 * 1em));
-      }
-      @if $count-2{
-        $result-layout:map-merge($result-layout,(max-width: $count-2 * 1em));
-      }
-    }
-  }
-  //adjust vertical margin or padding since presence of line-padding
-  @if $line-padding>0{
-    $margins:expand-margins(map-get($result-layout,'margin'));
-    $modify-length:smart-relative($line-padding/2,$relative-base);
-    @each $index in 1 3{
-      $margins:set-nth($margins,$index,nth($margins,$index)+- $modify-length);
-    }
-    $result-layout:map-merge($result-layout,(margin:shrink-margins($margins)));
-  }
-
-  @return $result-layout;
+  @return relative-layout-box($abs-child,$abs-parent);
 }
 
 @mixin relative-content-box($abs-child,$abs-parent){
-  @include print-css(relative-content-box($abs-child,$abs-parent));
+  @include print-css(relative-layout-box($abs-child,$abs-parent));
 }
 
 @function relative-padding-box($abs-child,$abs-parent){
+  @return relative-layout-box($abs-child,$abs-parent,1);
+}
 
+@mixin relative-padding-box($abs-child,$abs-parent){
+  @include print-css(relative-layout-box($abs-child,$abs-parent,1));
+}
+
+@function relative-border-box($abs-child,$abs-parent){
+  @return relative-layout-box($abs-child,$abs-parent,2);
+}
+
+@mixin relative-border-box($abs-child,$abs-parent){
+  @include print-css(relative-layout-box($abs-child,$abs-parent,2));
+}
+
+@function relative-margin-box($abs-child,$abs-parent){
+  @return relative-layout-box($abs-child,$abs-parent,3);
+}
+
+@mixin relative-margin-box($abs-child,$abs-parent){
+  @include print-css(relative-layout-box($abs-child,$abs-parent,3));
 }
 
 @function shape-box($abs-child,$abs-parent){
@@ -568,4 +541,3 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
 @mixin shape-box($abs-child,$abs-parent){
   @include print-css(shape-box($abs-child,$abs-parent));
 }
-
