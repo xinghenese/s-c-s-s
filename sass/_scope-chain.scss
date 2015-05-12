@@ -19,7 +19,11 @@
   @return true;
 }
 
-$layout-mixin-list: 'relative' 'relative-layout' 'relative-content-box' 'relative-box' 'shape-box';
+$layout-mixin-list: (
+        'content-box' 'padding-box' 'border-box' 'margin-box'
+        'relative-content-box' 'relative-padding-box' 'relative-border-box' 'relative-margin-box'
+//        'relative' 'relative-layout' 'relative-box'  'shape-box'
+);
 
 @function create-scopes-if-not-exists(){
   @if not global-variable-exists(scope-chain){
@@ -30,23 +34,17 @@ $layout-mixin-list: 'relative' 'relative-layout' 'relative-content-box' 'relativ
 }
 
 @function get-ancestor($selector){
-  $check: check-local-scope() create-scopes-if-not-exists();
-  $ancestors: if(is-list($selector),nth($selector,1),$selector);
-  $r:true;
-  @while length($ancestors)>1{
-    $ancestors:list-slice($ancestors,1,-1);
-    @each $item in $selector{
-      @if not str-index(list-to-string($item),list-to-string($ancestors)){
-        $r:false;
-      }
-    }
-    @if $r{
-      $ancestor:map-get($scope-chain,list-to-string($ancestors));
-      @if $ancestor{
-        @return $ancestor;
-      }
+  $check: check-local-scope() check-list($selector) create-scopes-if-not-exists();
+
+  @while length($selector)>1{
+    $selector:list-slice($selector,1,-2);
+    @warn '$ancestors of #{to-string($selector)} in get-ancestor: #{to-string($selector)}';
+    $ancestor:map-get($scope-chain,list-to-string($selector));
+    @if $ancestor{
+      @return $ancestor;
     }
   }
+
   @return map-get($scope-chain,'global');
 }
 
@@ -58,55 +56,22 @@ $layout-mixin-list: 'relative' 'relative-layout' 'relative-content-box' 'relativ
   $check: check-string($layout-mixin) check-map($self-layout) check-local-scope();
 
   @if index($layout-mixin-list,$layout-mixin){
+    $selector:nth(&,1);
+    $ancestor: get-ancestor($selector);
+    @warn '$ancestor of #{$selector}: #{to-string(nth($scope-chain,index(map-values($scope-chain),$ancestor)))}';
+    $self-layout:call(str-replace($layout-mixin,'relative-',''),$self-layout,$ancestor);
+    @warn '$self-layout of #{$selector}: #{to-string($self-layout)}';
 
-    //invoke layout-mixin accordingly
-    @each $selector in &{
-      $ancestor:get-ancestor($selector);
-      @warn '$ancestor: #{to-string($ancestor)}';
+    //filter $self-layout into a new map $self with keys:(width,font)
+    $self:map-select-pairs-with-unit($self-layout,$ancestor,'px',$ancestor);
+    @warn '#{to-string($scope-chain)}';
 
-      $self-layout:map-merge($ancestor,$self-layout);
+    //if the current scope has not been included in the $scope-chain, then add it to. else if the current scope already
+    //exists in the $scope-chain, then override it.
+    $scope-chain:map-merge($scope-chain,(list-to-string($selector):$self)) !global;
+    @warn '$scope-chain: #{to-string($scope-chain)}';
 
-      @if $layout-mixin=='content-box'{
-        @include content-box($self-layout,$ancestor);
-      }
-      @else if $layout-mixin=='padding-box'{
-        @include padding-box($self-layout,$ancestor);
-      }
-      @else if $layout-mixin=='border-box'{
-        @include border-box($self-layout,$ancestor);
-      }
-      @else if $layout-mixin=='margin-box'{
-        @include margin-box($self-layout,$ancestor);
-      }
-
-      @else if $layout-mixin=='relative-layout'{
-        @include relative-content-box($self-layout,$ancestor);
-      }
-      @else if $layout-mixin=='relative-box'{
-        @include relative-box($self-layout,$ancestor);
-      }
-      @else if $layout-mixin=='relative-content-box'{
-        @include relative-content-box($self-layout,$ancestor);
-      }
-      @else if $layout-mixin=='shape-box'{
-        @include shape-box($self-layout,$ancestor);
-      }
-
-      //test-block
-      @warn '$self-layout: #{to-string($self-layout)}';
-      @warn '$ancestor: #{to-string($ancestor)}';
-      //
-
-
-      //filter $self-layout into a new map $self with keys:(width,font)
-      $self:map-select-pairs-with-unit($self-layout,$ancestor,'px',$ancestor);
-      @warn '#{to-string($scope-chain)}';
-
-      //if the current scope has not been included in the $scope-chain, then add it to. else if the current scope already
-      //exists in the $scope-chain, then override it.
-      $scope-chain:map-merge($scope-chain,(list-to-string($selector):$self)) !global;
-      @warn '#{to-string($scope-chain)}';
-    }
-
+    $self-layout:if(str-index($layout-mixin,'relative'),relative-layout($self-layout,$ancestor),$self-layout);
+    @include print-css($self-layout);
   }
 }

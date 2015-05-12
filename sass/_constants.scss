@@ -65,6 +65,8 @@ $CSS_DEFAULTS:(
         line-height:1em,
 );
 
+$PRIVATE_METHOD_ACCESS_LOCK:false !default;
+
 $RELATIVE_THRESHOLD:10%;
 
 $global-width:640px !default;

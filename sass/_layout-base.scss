@@ -306,7 +306,7 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
   @return map-merge($result,$properties);
 }
 
-@function container-layout($abs-child,$abs-parent,$layout-type:0,$pre-process:true){
+@function container-layout($abs-child,$abs-parent,$layout-type:1,$pre-process:true){
   //check whether runs in local scope and check whether parameters: $abs-child, $abs-parent are in valid type.
   $check:check-local-scope() check-map($abs-child,$abs-parent) check-number($layout-type);
   $abs-parent:if($pre-process,_parse-map($abs-parent),$abs-parent);
@@ -321,7 +321,7 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
   //deal with the real size of the content zone respectively in the case of padding-box, border-box and margin-box.
   $element-list:'padding' 'border-width' 'margin';
   @each $item in $element-list{
-    @if $layout-type>=index($element-list,$item){
+    @if $layout-type>index($element-list,$item){
       $item:expand-margins(map-get($result-layout,$item) or 0px);
       $result-width:$result-width - nth($item,2) - nth($item,4);
       $result-height:$result-height - nth($item,1) - nth($item,3);
@@ -329,6 +329,9 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
   }
   $result-width:if($result-width>0,$result-width,$width);
   $result-height:if($result-height>0,$result-height,$height);
+
+  @warn 'result-width: #{to-string($result-width)}';
+
   @if $result-width{
     $result-layout:map-merge($result-layout,(width:$result-width));
   }
@@ -417,7 +420,7 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
   @return $result-layout;
 }
 
-@function layout-box($abs-child,$abs-parent,$layout-type:0){
+@function layout-box($abs-child,$abs-parent,$layout-type:1){
   @return content-layout(container-layout($abs-child,$abs-parent,$layout-type),$abs-parent,false);
 }
 
@@ -430,7 +433,7 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
 }
 
 @function padding-box($abs-child,$abs-parent){
-  @return layout-box($abs-child,$abs-parent,1);
+  @return layout-box($abs-child,$abs-parent,2);
 }
 
 @mixin padding-box($abs-child,$abs-parent){
@@ -438,7 +441,7 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
 }
 
 @function border-box($abs-child,$abs-parent){
-  @return layout-box($abs-child,$abs-parent,2);
+  @return layout-box($abs-child,$abs-parent,3);
 }
 
 @mixin border-box($abs-child,$abs-parent){
@@ -446,7 +449,7 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
 }
 
 @function margin-box($abs-child,$abs-parent){
-  @return layout-box($abs-child,$abs-parent,3);
+  @return layout-box($abs-child,$abs-parent,4);
 }
 
 @mixin margin-box($abs-child,$abs-parent){
@@ -456,13 +459,13 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
 //calculate the relative layout
 //@param
 //  $abs-child: a map with keys which stands for some properties of l
-@function relative-layout-box($abs-child,$abs-parent,$layout-type:0){
+@function relative-layout($abs-child,$abs-parent){
   //check whether runs in local scope and check whether parameters: $abs-child, $abs-parent are in valid type.
   $check:check-local-scope() check-map($abs-child,$abs-parent);
   $relative-base:relative-base($abs-child,$abs-parent);
+  $result-layout:$abs-child;
   //set relative layout property.
   //all these relative layout property is percentage of absolute property to width of parent element.
-  $result-layout:layout-box($abs-child,$abs-parent,$layout-type);
   @warn '#{inspect(&)}css: #{inspect($result-layout)}';
 
   @each $key,$value in $result-layout{
@@ -487,6 +490,10 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
   @return $result-layout;
 }
 
+@function relative-layout-box($abs-child,$abs-parent,$layout-type:1){
+  @return relative-layout(layout-box($abs-child,$abs-parent,$layout-type),$abs-parent);
+}
+
 @function relative-content-box($abs-child,$abs-parent){
   @return relative-layout-box($abs-child,$abs-parent);
 }
@@ -496,27 +503,27 @@ $LAYOUT_NAME_COMPONENT_MAPS:(
 }
 
 @function relative-padding-box($abs-child,$abs-parent){
-  @return relative-layout-box($abs-child,$abs-parent,1);
-}
-
-@mixin relative-padding-box($abs-child,$abs-parent){
-  @include print-css(relative-layout-box($abs-child,$abs-parent,1));
-}
-
-@function relative-border-box($abs-child,$abs-parent){
   @return relative-layout-box($abs-child,$abs-parent,2);
 }
 
-@mixin relative-border-box($abs-child,$abs-parent){
+@mixin relative-padding-box($abs-child,$abs-parent){
   @include print-css(relative-layout-box($abs-child,$abs-parent,2));
 }
 
-@function relative-margin-box($abs-child,$abs-parent){
+@function relative-border-box($abs-child,$abs-parent){
   @return relative-layout-box($abs-child,$abs-parent,3);
 }
 
-@mixin relative-margin-box($abs-child,$abs-parent){
+@mixin relative-border-box($abs-child,$abs-parent){
   @include print-css(relative-layout-box($abs-child,$abs-parent,3));
+}
+
+@function relative-margin-box($abs-child,$abs-parent){
+  @return relative-layout-box($abs-child,$abs-parent,4);
+}
+
+@mixin relative-margin-box($abs-child,$abs-parent){
+  @include print-css(relative-layout-box($abs-child,$abs-parent,4));
 }
 
 @function shape-box($abs-child,$abs-parent){
